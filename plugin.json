@@ -12,5 +12,14 @@
   "sourceUrl": "https://github.com/denolehov/VCVTyche",
   "donateUrl": "https://www.buymeacoffee.com/evrwhr",
   "changelogUrl": "",
-  "modules": []
+  "modules": [
+    {
+      "slug": "Oracle",
+      "name": "Oracle",
+      "description": "Controls the seed of the other Tyche modules",
+      "tags": [
+        "Utility"
+      ]
+    }
+  ]
 }
