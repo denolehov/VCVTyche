@@ -1,0 +1,3 @@
+[submodule "external/OpenSimplexNoise"]
+	path = external/OpenSimplexNoise
+	url = https://github.com/deerel/OpenSimplexNoise.git
