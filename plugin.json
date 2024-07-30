@@ -20,6 +20,15 @@
       "tags": [
         "Utility"
       ]
+    },
+    {
+      "slug": "Pythia",
+      "name": "Pythia",
+      "description": "Random-walk CV source",
+      "tags": [
+        "Random",
+        "Sample and hold"
+      ]
     }
   ]
 }
