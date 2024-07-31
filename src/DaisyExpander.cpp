@@ -1,9 +1,15 @@
 #include "DaisyExpander.h"
 
-DaisyExpander::DaisyExpander() : noise(new OpenSimplexNoise::Noise())
+template<typename T, typename ...Args>
+std::unique_ptr<T> make_unique(Args&& ...args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+DaisyExpander::DaisyExpander() : noise(make_unique<OpenSimplexNoise::Noise>())
 {
     getLeftExpander().producerMessage = &messages[0];
-    getRightExpander().producerMessage = &messages[1];
+    getLeftExpander().consumerMessage = &messages[1];
 }
 
 void DaisyExpander::process(const ProcessArgs& args)
@@ -13,20 +19,21 @@ void DaisyExpander::process(const ProcessArgs& args)
 
 void DaisyExpander::reseedNoise(const int seed)
 {
-    noise.reset(new OpenSimplexNoise::Noise(seed));
+    noise = make_unique<OpenSimplexNoise::Noise>(seed);
 }
 
 void DaisyExpander::processIncomingMessage()
 {
+    // ReSharper disable once CppReinterpretCastFromVoidPtr
     auto* message = reinterpret_cast<Message*>(getLeftExpander().consumerMessage);
     if (!message || message->processed)
         return;
 
-    if (message->seedChanged)
+    if (message->seedChanged || message->globalReset)
+    {
         reseedNoise(message->seed);
-
-    if (message->globalReset)
         reset();
+    }
 
     if (message->clockReceived)
         onClock(message->clock);
@@ -40,8 +47,12 @@ void DaisyExpander::propagateToDaisyChained(const Message& message)
 {
     Module* rightModule = getRightExpander().module;
     if (!isExpanderCompatible(rightModule))
+    {
+        DEBUG("RIGHT MODULE IS NOT COMPATIBLE!");
         return;
+    }
 
+    // ReSharper disable once CppReinterpretCastFromVoidPtr
     auto* producerMessage = reinterpret_cast<Message*>(rightModule->getLeftExpander().producerMessage);
     if (!producerMessage)
     {
@@ -55,11 +66,11 @@ void DaisyExpander::propagateToDaisyChained(const Message& message)
     rightModule->getLeftExpander().requestMessageFlip();
 }
 
-bool DaisyExpander::isExpanderCompatible(Module* module)
+bool isExpanderCompatible(Module* module)
 {
     return dynamic_cast<DaisyExpander*>(module) != nullptr;
 }
 
 void DaisyExpander::reset() {}
 
-void DaisyExpander::onClock(int clock) {}
+void DaisyExpander::onClock(uint32_t clock) {}

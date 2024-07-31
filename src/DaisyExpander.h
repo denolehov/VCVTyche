@@ -9,7 +9,7 @@ struct Message {
 
     bool globalReset = false;
 
-    int clock = 0;
+    uint32_t clock = 0;
     bool clockReceived = false;
 
     bool processed = false;
@@ -30,8 +30,9 @@ struct DaisyExpander : Module
     void processIncomingMessage();
     void propagateToDaisyChained(const Message& message);
 
-    static bool isExpanderCompatible(Module* module);
 
     virtual void reset();
-    virtual void onClock(int clock);
+    virtual void onClock(uint32_t clock);
 };
+
+bool isExpanderCompatible(Module* module);

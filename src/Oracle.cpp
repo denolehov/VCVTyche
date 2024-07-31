@@ -1,4 +1,5 @@
 #include "plugin.hpp"
+#include "DaisyExpander.h"
 
 constexpr int NUM_SEED_PARAMS = 6;
 constexpr int DOTTED_ONE_HALF_DIVISION = 72;
@@ -94,8 +95,10 @@ struct Oracle final : Module {
 		if (resetHigh)
 			reset();
 
-		// if (seedChanged || clockHigh || resetHigh)
-			// TODO: Propagate this to the expanders
+		if (seedChanged || clockHigh || resetHigh)
+		{
+			propagateToDaisyChained(seedChanged, clockHigh, resetHigh);
+		}
 
 		updateSeedButtonColors(args.sampleTime);
 	}
@@ -113,7 +116,34 @@ struct Oracle final : Module {
 
 		updateSeed();
 
-		// TODO: Propagate this to the expanders.
+		propagateToDaisyChained(true, false, false);
+	}
+
+	void propagateToDaisyChained(const bool seedChanged, const bool clockHigh, const bool resetHigh)
+	{
+		Module* rightModule = getRightExpander().module;
+		if (!isExpanderCompatible(rightModule))
+			return;
+
+		// ReSharper disable once CppReinterpretCastFromVoidPtr
+		auto* producerMessage = reinterpret_cast<Message*>(rightModule->getLeftExpander().producerMessage);
+		if (!producerMessage)
+		{
+			DEBUG("Producer message is null. Was it set in the DaisyExpander constructor?");
+			return;
+		}
+
+		// TODO: Message should be a struct with a proper constructor.
+		Message message;
+		message.seed = seed;
+		message.seedChanged = seedChanged;
+		message.clock = clockDivider.getClock();
+		message.clockReceived = clockHigh;
+		message.globalReset = resetHigh;
+
+		*producerMessage = message;
+
+		rightModule->getLeftExpander().requestMessageFlip();
 	}
 
 	bool isSeedButtonPushed(const int btnIndex)
@@ -123,6 +153,7 @@ struct Oracle final : Module {
 
 	void updateSeed()
 	{
+		seed = 0;
 		for (int i = 0; i < NUM_SEED_PARAMS; ++i)
 		{
 			const int stateValue = static_cast<int>(seedConfiguration[i]) + 1;
@@ -212,7 +243,7 @@ struct Oracle final : Module {
 			}
 		}
 
-		// TODO: Propagate the seed to the expanders.
+		propagateToDaisyChained(true, false, false);
 	}
 };
 
