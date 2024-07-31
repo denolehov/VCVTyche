@@ -9,7 +9,7 @@ CXXFLAGS += -Iexternal/OpenSimplexNoise
 LDFLAGS +=
 
 SOURCES += $(wildcard src/*.cpp)
-SOURCES += $(wildcard external/OpenSimplexNoise/*.cpp)
+SOURCES += $(wildcard external/OpenSimplexNoise/OpenSimplexNoise/*.cpp)
 
 DISTRIBUTABLES += res
 DISTRIBUTABLES += $(wildcard LICENSE*)
