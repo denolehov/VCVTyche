@@ -29,6 +29,14 @@
         "Random",
         "Sample and hold"
       ]
+    },
+    {
+      "slug": "Kron",
+      "name": "Kron",
+      "description": "Random pulse generator",
+      "tags": [
+        "Random"
+      ]
     }
   ]
 }

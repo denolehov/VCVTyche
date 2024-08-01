@@ -24,9 +24,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="2.2584783"
-     inkscape:cx="31.437096"
-     inkscape:cy="273.19279"
+     inkscape:zoom="2.8436644"
+     inkscape:cx="12.659722"
+     inkscape:cy="330.20774"
      inkscape:window-width="1512"
      inkscape:window-height="857"
      inkscape:window-x="0"
@@ -86,13 +86,18 @@
      inkscape:label="MODULE_NAME_TEXT"
      aria-label="PYTHIA" />
   <rect
-     style="fill:#fffff0;fill-opacity:1;stroke-width:0.318182"
+     style="display:none;fill:#fffff0;fill-opacity:1;stroke-width:0.318182"
      id="rect8"
      width="10"
      height="14.741"
      x="7.7000122"
      y="87.5"
      ry="1"
+     inkscape:label="OUT_BG" />
+  <path
+     d="m 9.7918742,87.500295 c -1.1589668,0 -2.091862,0.932896 -2.091862,2.091862 v 10.556983 c 0,1.15896 0.9328952,2.09186 2.091862,2.09186 h 5.8161818 c 1.158968,0 2.091862,-0.9329 2.091862,-2.09186 V 89.592157 c 0,-1.158966 -0.932895,-2.091862 -2.091862,-2.091862 z m 2.9083498,0.775147 a 4.2249999,4.2249999 0 0 1 4.225065,4.224548 4.2249999,4.2249999 0 0 1 -4.225065,4.22506 4.2249999,4.2249999 0 0 1 -4.2250653,-4.22506 4.2249999,4.2249999 0 0 1 4.2250653,-4.224548 z"
+     style="display:inline;fill:#fffff0;stroke-width:0.415766"
+     id="path7"
      inkscape:label="OUT_BG" />
   <circle
      style="display:inline;fill:#fffff0;fill-opacity:1;stroke-width:0.269794"
