@@ -29,10 +29,11 @@ void DaisyExpander::processIncomingMessage()
     if (!message || message->processed)
         return;
 
-    if (message->seedChanged || message->globalReset)
+    if (message->seed != seed || message->globalReset)
     {
         reseedNoise(message->seed);
         reset();
+        seed = message->seed;
     }
 
     if (message->clockReceived)
@@ -48,7 +49,6 @@ void DaisyExpander::propagateToDaisyChained(const Message& message)
     Module* rightModule = getRightExpander().module;
     if (!isExpanderCompatible(rightModule))
     {
-        DEBUG("RIGHT MODULE IS NOT COMPATIBLE!");
         return;
     }
 

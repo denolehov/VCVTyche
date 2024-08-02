@@ -53,10 +53,9 @@ struct Oracle final : Module {
 	LightId seedLights[NUM_SEED_PARAMS] = {ALPHA_LIGHT, BETA_LIGHT, GAMMA_LIGHT, DELTA_LIGHT, EPSILON_LIGHT, ZETA_LIGHT};
 	SeedState seedConfiguration[NUM_SEED_PARAMS] = {A};
 	int seed = 0;
+	uint32_t clock = 0;
 
 	dsp::SchmittTrigger clockTrigger;
-	dsp::ClockDivider clockDivider;
-
 	dsp::SchmittTrigger resetTrigger;
 
 	Oracle() {
@@ -69,8 +68,6 @@ struct Oracle final : Module {
 		configButton(ZETA_PARAM, "Zeta");
 		configInput(CLOCK_INPUT, "Clock (24ppqn)");
 		configInput(RESET_INPUT, "Reset");
-
-		clockDivider.setDivision(DOTTED_ONE_HALF_DIVISION);
 	}
 
 	void process(const ProcessArgs& args) override {
@@ -89,7 +86,7 @@ struct Oracle final : Module {
 
 		const bool clockHigh = clockTrigger.process(inputs[CLOCK_INPUT].getVoltage());
 		if (clockHigh)
-			clockDivider.process();
+			clock++;
 
 		const bool resetHigh = resetTrigger.process(inputs[RESET_INPUT].getVoltage());
 		if (resetHigh)
@@ -97,7 +94,7 @@ struct Oracle final : Module {
 
 		if (seedChanged || clockHigh || resetHigh)
 		{
-			propagateToDaisyChained(seedChanged, clockHigh, resetHigh);
+			propagateToDaisyChained(clockHigh, resetHigh);
 		}
 
 		updateSeedButtonColors(args.sampleTime);
@@ -116,10 +113,10 @@ struct Oracle final : Module {
 
 		updateSeed();
 
-		propagateToDaisyChained(true, false, false);
+		propagateToDaisyChained(false, false);
 	}
 
-	void propagateToDaisyChained(const bool seedChanged, const bool clockHigh, const bool resetHigh)
+	void propagateToDaisyChained(const bool clockHigh, const bool resetHigh)
 	{
 		Module* rightModule = getRightExpander().module;
 		if (!isExpanderCompatible(rightModule))
@@ -136,8 +133,7 @@ struct Oracle final : Module {
 		// TODO: Message should be a struct with a proper constructor.
 		Message message;
 		message.seed = seed;
-		message.seedChanged = seedChanged;
-		message.clock = clockDivider.getClock();
+		message.clock = clock;
 		message.clockReceived = clockHigh;
 		message.globalReset = resetHigh;
 
@@ -163,7 +159,7 @@ struct Oracle final : Module {
 
 	void reset()
 	{
-		clockDivider.reset();
+		clock = 0;
 		clockTrigger.reset();
 		resetTrigger.reset();
 	}
@@ -243,7 +239,7 @@ struct Oracle final : Module {
 			}
 		}
 
-		propagateToDaisyChained(true, false, false);
+		propagateToDaisyChained(false, false);
 	}
 };
 

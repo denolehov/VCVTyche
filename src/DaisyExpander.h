@@ -5,7 +5,6 @@
 
 struct Message {
     int seed = 0;
-    bool seedChanged = false;
 
     bool globalReset = false;
 
@@ -19,6 +18,7 @@ struct Message {
 
 struct DaisyExpander : Module
 {
+    int seed = 0;
     std::unique_ptr<OpenSimplexNoise::Noise> noise;
     Message messages[2] = {};
 
