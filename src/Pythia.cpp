@@ -90,13 +90,13 @@ struct PythiaWidget final : ModuleWidget {
 		setModule(module);
 		setPanel(createPanel(asset::plugin(pluginInstance, "res/Pythia.svg")));
 
-		addParam(createParamCentered<RoundBigBlackKnob>(mm2px(Vec(12.7, 25.5)), module, Pythia::SPEED_PARAM));
-		addParam(createParamCentered<RoundLargeBlackSnapKnob>(mm2px(Vec(12.7, 49.5)), module, Pythia::VARIANT_PARAM));
+		addParam(createParamCentered<RoundHugeBlackKnob>(mm2px(Vec(12.7, 24.0)), module, Pythia::SPEED_PARAM));
+		addParam(createParamCentered<RoundLargeBlackSnapKnob>(mm2px(Vec(12.7, 53.5)), module, Pythia::VARIANT_PARAM));
 
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 73.0)), module, Pythia::HOLD_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 110.0)), module, Pythia::RESET_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 78.0)), module, Pythia::HOLD_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 114.0)), module, Pythia::RESET_INPUT));
 
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 92.5)), module, Pythia::OUT_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(12.7, 96.5)), module, Pythia::OUT_OUTPUT));
 	}
 };
 

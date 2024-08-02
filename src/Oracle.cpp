@@ -260,8 +260,8 @@ struct OracleWidget final : ModuleWidget {
 		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 66.0)), module, Oracle::EPSILON_PARAM, Oracle::EPSILON_LIGHT));
 		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 78.0)), module, Oracle::ZETA_PARAM, Oracle::ZETA_LIGHT));
 
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 92.5)), module, Oracle::CLOCK_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 110.233)), module, Oracle::RESET_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 96.5)), module, Oracle::CLOCK_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.0)), module, Oracle::RESET_INPUT));
 	}
 };
 
