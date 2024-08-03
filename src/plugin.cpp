@@ -9,4 +9,5 @@ void init(Plugin* p) {
 	p->addModel(modelOracle);
 	p->addModel(modelPythia);
 	p->addModel(modelKron);
+	p->addModel(modelBlank);
 }

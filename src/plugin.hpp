@@ -8,3 +8,4 @@ extern Plugin* pluginInstance;
 extern Model* modelOracle;
 extern Model* modelPythia;
 extern Model* modelKron;
+extern Model* modelBlank;

@@ -37,6 +37,12 @@
       "tags": [
         "Random"
       ]
+    },
+    {
+      "slug": "Blank",
+      "name": "Blank",
+      "description": "A blank separator from Tyche collection",
+      "tags": []
     }
   ]
 }
