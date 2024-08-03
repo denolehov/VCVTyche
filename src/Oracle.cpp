@@ -2,7 +2,6 @@
 #include "DaisyExpander.h"
 
 constexpr int NUM_SEED_PARAMS = 6;
-constexpr int DOTTED_ONE_HALF_DIVISION = 72;
 
 
 enum SeedState { A, B, C, D, E, F };
@@ -225,7 +224,7 @@ struct Oracle final : Module {
 		// Seed
 		const json_t* seedJ = json_object_get(rootJ, "seed");
 		if (seedJ)
-			seed = json_integer_value(seedJ);
+			seed = static_cast<int>(json_integer_value(seedJ));
 
 		// Seed Configuration
 		const json_t* seedConfigurationJ = json_object_get(rootJ, "seedConfiguration");
