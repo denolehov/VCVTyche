@@ -1,10 +1,10 @@
 {
-  "slug": "Tyche",
+  "slug": "evrwhrModules-Tyche",
   "name": "Tyche",
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
   "brand": "Tyche",
-  "author": "Denis Olehov",
+  "author": "denolehov",
   "authorEmail": "",
   "authorUrl": "https://github.com/denolehov",
   "pluginUrl": "https://github.com/denolehov/VCVTyche",
@@ -18,7 +18,12 @@
       "name": "Oracle",
       "description": "Controls the seed of the other Tyche modules",
       "tags": [
-        "Utility"
+        "Random",
+        "Sample and hold",
+        "Noise",
+        "Low-frequency oscillator",
+        "Function Generator",
+        "Clock Modulator"
       ]
     },
     {
@@ -27,7 +32,11 @@
       "description": "Random-walk CV source",
       "tags": [
         "Random",
-        "Sample and hold"
+        "Sample and hold",
+        "Noise",
+        "Low-frequency oscillator",
+        "Function Generator",
+        "Expander"
       ]
     },
     {
@@ -35,14 +44,19 @@
       "name": "Kron",
       "description": "Random pulse generator",
       "tags": [
-        "Random"
+        "Clock Modulator",
+        "Random",
+        "Expander"
       ]
     },
     {
       "slug": "Blank",
       "name": "Blank",
       "description": "A blank separator from Tyche collection",
-      "tags": []
+      "tags": [
+        "Blank",
+        "Expander"
+      ]
     }
   ]
 }
