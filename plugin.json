@@ -57,6 +57,18 @@
         "Blank",
         "Expander"
       ]
+    },
+    {
+      "slug": "Tale",
+      "name": "Tale",
+      "description": "Random-walk CV source",
+      "tags": [
+        "Random",
+        "Sample and hold",
+        "Noise",
+        "Low-frequency oscillator",
+        "Expander"
+      ]
     }
   ]
 }
