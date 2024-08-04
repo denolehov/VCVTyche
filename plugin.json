@@ -27,34 +27,12 @@
       ]
     },
     {
-      "slug": "Pythia",
-      "name": "Pythia",
-      "description": "Random-walk CV source",
-      "tags": [
-        "Random",
-        "Sample and hold",
-        "Noise",
-        "Low-frequency oscillator",
-        "Function Generator",
-        "Expander"
-      ]
-    },
-    {
       "slug": "Kron",
       "name": "Kron",
       "description": "Random pulse generator",
       "tags": [
         "Clock Modulator",
         "Random",
-        "Expander"
-      ]
-    },
-    {
-      "slug": "Blank",
-      "name": "Blank",
-      "description": "A blank separator from Tyche collection",
-      "tags": [
-        "Blank",
         "Expander"
       ]
     },
@@ -67,6 +45,15 @@
         "Sample and hold",
         "Noise",
         "Low-frequency oscillator",
+        "Expander"
+      ]
+    },
+    {
+      "slug": "Blank",
+      "name": "Blank",
+      "description": "A blank separator from Tyche collection",
+      "tags": [
+        "Blank",
         "Expander"
       ]
     }
