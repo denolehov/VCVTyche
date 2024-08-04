@@ -19,7 +19,7 @@ SeedState& operator++(SeedState& state) {
 }
 
 
-struct Oracle final : Module {
+struct Omen final : Module {
 	enum ParamId {
 		ALPHA_PARAM,
 		BETA_PARAM,
@@ -57,7 +57,7 @@ struct Oracle final : Module {
 	dsp::SchmittTrigger clockTrigger;
 	dsp::SchmittTrigger resetTrigger;
 
-	Oracle() {
+	Omen() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 		configButton(ALPHA_PARAM, "Alpha");
 		configButton(BETA_PARAM, "Beta");
@@ -243,22 +243,22 @@ struct Oracle final : Module {
 };
 
 
-struct OracleWidget final : ModuleWidget {
-	explicit OracleWidget(Oracle* module) {
+struct OmenWidget final : ModuleWidget {
+	explicit OmenWidget(Omen* module) {
 		setModule(module);
-		setPanel(createPanel(asset::plugin(pluginInstance, "res/Oracle.svg")));
+		setPanel(createPanel(asset::plugin(pluginInstance, "res/Omen.svg")));
 
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 18.0)), module, Oracle::ALPHA_PARAM, Oracle::ALPHA_LIGHT));
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 30.0)), module, Oracle::BETA_PARAM, Oracle::BETA_LIGHT));
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 42.0)), module, Oracle::GAMMA_PARAM, Oracle::GAMMA_LIGHT));
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 54.0)), module, Oracle::DELTA_PARAM, Oracle::DELTA_LIGHT));
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 66.0)), module, Oracle::EPSILON_PARAM, Oracle::EPSILON_LIGHT));
-		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 78.0)), module, Oracle::ZETA_PARAM, Oracle::ZETA_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 18.0)), module, Omen::ALPHA_PARAM, Omen::ALPHA_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 30.0)), module, Omen::BETA_PARAM, Omen::BETA_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 42.0)), module, Omen::GAMMA_PARAM, Omen::GAMMA_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 54.0)), module, Omen::DELTA_PARAM, Omen::DELTA_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 66.0)), module, Omen::EPSILON_PARAM, Omen::EPSILON_LIGHT));
+		addParam(createLightParamCentered<LightButton<VCVBezel, VCVBezelLight<RedGreenBlueLight>>>(mm2px(Vec(7.62, 78.0)), module, Omen::ZETA_PARAM, Omen::ZETA_LIGHT));
 
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 96.5)), module, Oracle::CLOCK_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.0)), module, Oracle::RESET_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 96.5)), module, Omen::CLOCK_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.0)), module, Omen::RESET_INPUT));
 	}
 };
 
 
-Model* modelOracle = createModel<Oracle, OracleWidget>("Oracle");
+Model* modelOmen = createModel<Omen, OmenWidget>("Omen");

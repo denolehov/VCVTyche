@@ -14,8 +14,8 @@
   "changelogUrl": "",
   "modules": [
     {
-      "slug": "Oracle",
-      "name": "Oracle",
+      "slug": "Omen",
+      "name": "Omen",
       "description": "Controls the seed of the other Tyche modules",
       "tags": [
         "Random",
