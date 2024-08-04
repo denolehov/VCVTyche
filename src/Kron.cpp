@@ -41,7 +41,7 @@ struct Kron final : DaisyExpander {
 	int divisionIdx = 0;
 	float variant = 1;
 
-	uint32_t prevReceivedClock = 0;
+	uint32_t globalClock = 0;
 
 	bool clockProcessed = true;
 
@@ -132,19 +132,19 @@ struct Kron final : DaisyExpander {
 	{
 		clockProcessed = false;
 
-		if (clock == 1)
+		if (clock == 0 || globalClock > clock)
 		{
 			this->clock = clock;
-			prevReceivedClock = clock;
+			globalClock = clock;
 			return;
 		}
 
-		const auto clockDelta = static_cast<int32_t>(clock - prevReceivedClock);
+		const auto clockDelta = static_cast<int32_t>(clock - globalClock);
 		if (clockDelta > 1)
-			DEBUG("CLOCK DELTA IS %d; CLOCK: %d, PREV CLOCK: %d", clockDelta, clock, prevReceivedClock);
+			DEBUG("CLOCK DELTA IS %d; CLOCK: %d, PREV CLOCK: %d", clockDelta, clock, globalClock);
 
 		this->clock += clockDelta;
-		prevReceivedClock = clock;
+		globalClock = clock;
 	}
 
 	void reset() override
