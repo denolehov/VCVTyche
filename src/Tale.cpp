@@ -35,6 +35,7 @@ struct Tale final : DaisyExpander {
 	float heldNoiseValue = 0.f;
 
 	dsp::ClockDivider variantChangeDivider;
+	dsp::ClockDivider lightDivider;
 
 	Tale() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
@@ -75,7 +76,26 @@ struct Tale final : DaisyExpander {
 
 		const float speed = minSpeed * std::pow(maxSpeed / minSpeed, getParam(PACE_PARAM).getValue());
 		phase += speed * args.sampleTime;
+
+		if (lightDivider.process())
+			setLight(PACE_LIGHT, outCV, args.sampleTime);
 }
+
+	void setLight(LightId lightId, float val, float delta)
+	{
+		val = rescale(val, -5.f, 5.f, -1.f, 1.f);
+		if (val >= 0)
+		{
+			getLight(lightId + 0).setBrightnessSmooth(0, delta);
+			getLight(lightId + 1).setBrightnessSmooth(1.f * val, delta);
+			getLight(lightId + 2).setBrightnessSmooth(0.f, delta);
+		} else
+		{
+			getLight(lightId + 0).setBrightnessSmooth(1.f * std::fabs(val), delta);
+			getLight(lightId + 1).setBrightnessSmooth(0.f, delta);
+			getLight(lightId + 2).setBrightnessSmooth(0.f, delta);
+		}
+	}
 
 	void reset() override
 	{
