@@ -26,20 +26,12 @@ struct Kron final : DaisyExpander {
 		LIGHTS_LEN
 	};
 
-	Kron() {
-		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(DENSITY_PARAM, 0.f, 100.f, 0.f, "Density", "%");
-		configParam(VARIANT_PARAM, 1.f, 128.f, 1.f, "Variant");
-		configInput(DENSITY_INPUT, "Density");
-		configInput(MUTE_INPUT, "Mute");
-		configInput(RESET_INPUT, "Reset");
-		configOutput(OUT_OUTPUT, "Trigger");
-	}
-
 	uint32_t clock = 0;
 	uint32_t division = 48;
 	int divisionIdx = 0;
+
 	float variant = 1;
+	dsp::ClockDivider variantChangeDivider;
 
 	uint32_t globalClock = 0;
 
@@ -62,6 +54,19 @@ struct Kron final : DaisyExpander {
 
 	dsp::SchmittTrigger resetTrigger;
 	dsp::PulseGenerator pulse;
+
+	Kron() {
+		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
+		configParam(DENSITY_PARAM, 0.f, 100.f, 0.f, "Density", "%");
+		configParam(VARIANT_PARAM, 1.f, 128.f, 1.f, "Variant");
+		configInput(DENSITY_INPUT, "Density");
+		configInput(MUTE_INPUT, "Mute");
+		configInput(RESET_INPUT, "Reset");
+		configOutput(OUT_OUTPUT, "Trigger");
+
+		variantChangeDivider.setDivision(16384);
+	}
+
 
 	void process(const ProcessArgs& args) override {
 		handleReset();
@@ -121,7 +126,7 @@ struct Kron final : DaisyExpander {
 	void handleVariantChange()
 	{
 		const float newVariant = getParam(VARIANT_PARAM).getValue();
-		if (newVariant != variant && clock == 0)
+		if (newVariant != variant && variantChangeDivider.process())
 		{
 			variant = newVariant;
 			DEBUG("VARIANT IS SET TO %f", variant);
