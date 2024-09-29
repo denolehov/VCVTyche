@@ -9,3 +9,4 @@ extern Model* modelOmen;
 extern Model* modelKron;
 extern Model* modelBlank;
 extern Model* modelTale;
+extern Model* modelFate;

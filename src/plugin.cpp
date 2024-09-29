@@ -9,5 +9,6 @@ void init(Plugin* p) {
 	p->addModel(modelOmen);
 	p->addModel(modelTale);
 	p->addModel(modelKron);
+	p->addModel(modelFate);
 	p->addModel(modelBlank);
 }
