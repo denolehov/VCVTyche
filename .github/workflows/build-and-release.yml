@@ -27,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
       - uses: actions/cache@v4
         id: plugin-version-cache
         with:
@@ -52,6 +55,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          tags: true
           submodules: recursive
       - uses: actions/cache@v4
         id: plugin-version-cache
@@ -80,6 +85,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
+          tags: true
           submodules: recursive
       - uses: actions/cache@v4
         id: plugin-version-cache
@@ -112,12 +119,15 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
       - name: Get Current Version
         id: get_version
         run: |
           VERSION=$(jq -r '.version' plugin.json)
           echo "Version from plugin.json: $VERSION"
-          echo "::set-output name=VERSION::$VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
       - name: Check for Existing Tag
         run: |
           if git rev-parse "v${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
@@ -145,6 +155,9 @@ jobs:
     needs: [build, build-mac]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
       - uses: FranzDiebold/github-env-vars-action@v2
       - name: Check if plugin version matches tag
         run: |
