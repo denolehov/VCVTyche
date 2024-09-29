@@ -1,0 +1,54 @@
+name: Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  rack-sdk-version: latest
+  rack-plugin-toolchain-dir: /home/build/rack-plugin-toolchain
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build on ${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [win-x64, lin-x64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
+          submodules: recursive
+
+      - name: Build plugin
+        run: |
+          export PLUGIN_DIR=$GITHUB_WORKSPACE
+          pushd ${{ env.rack-plugin-toolchain-dir }}
+          make plugin-build-${{ matrix.platform }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
+          name: ${{ matrix.platform }}
+          overwrite: true
+
+  build-mac:
+    name: Build on macOS ${{ matrix.platform }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v4
