@@ -28,6 +28,12 @@ if ! command -v jq &> /dev/null; then
   exit 1
 fi
 
+# Ensure 'gh' is installed for GitHub CLI
+if ! command -v gh &> /dev/null; then
+  echo "'gh' is not installed. Please install it to proceed."
+  exit 1
+fi
+
 # Fetch the current version from plugin.json
 CURRENT_VERSION=$(jq -r '.version' plugin.json)
 
@@ -64,6 +70,10 @@ increment_version $INCREMENT_TYPE
 # Form the new version string
 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
+# Create a new release branch
+BRANCH_NAME="release/v$NEW_VERSION"
+git checkout -b "$BRANCH_NAME"
+
 # Update the version in plugin.json
 jq --arg version "$NEW_VERSION" '.version = $version' plugin.json > plugin.json.tmp && mv plugin.json.tmp plugin.json
 
@@ -71,5 +81,12 @@ jq --arg version "$NEW_VERSION" '.version = $version' plugin.json > plugin.json.
 git add plugin.json
 git commit -m "Bump version to $NEW_VERSION"
 
+# Push the branch to the remote repository
+git push -u origin "$BRANCH_NAME"
+
+# Create a pull request using GitHub CLI
+gh pr create --title "Release v$NEW_VERSION" --body "This PR prepares the release of version $NEW_VERSION." --base main --head "$BRANCH_NAME" --web
+
 echo "Version bumped to $NEW_VERSION."
-echo "Please merge this branch into 'main' and create a tag 'v$NEW_VERSION' on 'main' after merging."
+echo "A pull request has been created to merge '$BRANCH_NAME' into 'main'."
+echo "Please review and merge the PR to proceed with the release."
