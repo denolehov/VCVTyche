@@ -23,8 +23,11 @@ defaults:
 
 jobs:
   build:
-    name: "Build on ${{ matrix.platform }}"
+    name: Build on ${{ matrix.platform }}
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/qno/rack-plugin-toolchain-win-linux
+      options: --user root
     strategy:
       matrix:
         platform: [win-x64, lin-x64]
@@ -35,10 +38,11 @@ jobs:
           tags: true
           submodules: recursive
 
-      - name: Set up Build Environment
-        run: |
-          # Add any setup commands needed before building
-          echo "Setting up build environment for ${{ matrix.platform }}"
+      - uses: actions/cache@v4
+        id: plugin-version-cache
+        with:
+          path: plugin.json
+          key: ${{ github.sha }}-${{ github.run_id }}
 
       - name: Build plugin
         run: |
@@ -50,11 +54,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
-          name: "${{ matrix.platform }}"
+          name: ${{ matrix.platform }}
           overwrite: true
 
   build-mac:
-    name: "Build on macOS ${{ matrix.platform }}"
+    name: Build on macOS ${{ matrix.platform }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -70,7 +74,7 @@ jobs:
       - name: Get Rack-SDK
         run: |
           pushd $HOME
-          wget -O Rack-SDK.zip "https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-x64%2barm64.zip"
+          wget -O Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-x64%2barm64.zip
           unzip Rack-SDK.zip
 
       - name: Build plugin
@@ -86,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: dist/*.vcvplugin
-          name: "mac-${{ matrix.platform }}"
+          name: mac-${{ matrix.platform }}
           overwrite: true
 
   tag_version:
