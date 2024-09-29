@@ -1,4 +1,4 @@
-name: Build and Release Tyche VCV Rack Plugin
+name: Build and release Tyche VCV Rack plugin
 permissions:
   contents: write
 

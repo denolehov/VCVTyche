@@ -1,0 +1,30 @@
+name: Tag on version bump
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag_version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get Current Version
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' plugin.json)
+          echo "::set-output name=VERSION::$VERSION"
+      - name: Check for Version Tag
+        run: |
+          if git rev-parse "v${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.get_version.outputs.VERSION }} already exists."
+            exit 0
+          else
+            echo "Tag v${{ steps.get_version.outputs.VERSION }} does not exist."
+          fi
+      - name: Create Tag
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git tag -a "v${{ steps.get_version.outputs.VERSION }}" -m "Release version ${{ steps.get_version.outputs.VERSION }}"
+          git push origin "v${{ steps.get_version.outputs.VERSION }}"
