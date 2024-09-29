@@ -74,7 +74,11 @@ struct Tale final : DaisyExpander {
 		outCV = rescale(outCV, -1.f, 1.f, -5.f, 5.f);
 		getOutput(OUT_OUTPUT).setVoltage(outCV);
 
-		const float speed = minSpeed * std::pow(maxSpeed / minSpeed, getParam(PACE_PARAM).getValue());
+		float pace = getParam(PACE_PARAM).getValue();
+		if (getInput(PACE_INPUT).isConnected())
+			pace *= rescale(getInput(PACE_INPUT).getVoltage(), -5.f, 5.f, 0.f, 1.f);
+
+		const float speed = minSpeed * std::pow(maxSpeed / minSpeed, pace);
 		phase += speed * args.sampleTime;
 
 		if (lightDivider.process())
