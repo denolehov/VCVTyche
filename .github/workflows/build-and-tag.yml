@@ -23,7 +23,7 @@ defaults:
 
 jobs:
   build:
-    name: Build on ${{ matrix.platform }}
+    name: "Build on ${{ matrix.platform }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -50,11 +50,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: ${{ env.rack-plugin-toolchain-dir }}/plugin-build
-          name: ${{ matrix.platform }}
+          name: "${{ matrix.platform }}"
           overwrite: true
 
   build-mac:
-    name: Build on macOS ${{ matrix.platform }}
+    name: "Build on macOS ${{ matrix.platform }}"
     runs-on: macos-latest
     strategy:
       fail-fast: false
@@ -70,7 +70,7 @@ jobs:
       - name: Get Rack-SDK
         run: |
           pushd $HOME
-          wget -O Rack-SDK.zip https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-x64%2barm64.zip
+          wget -O Rack-SDK.zip "https://vcvrack.com/downloads/Rack-SDK-${{ env.rack-sdk-version }}-mac-x64%2barm64.zip"
           unzip Rack-SDK.zip
 
       - name: Build plugin
@@ -86,4 +86,71 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: dist/*.vcvplugin
-          name: mac-${{ matrix.pla
+          name: "mac-${{ matrix.platform }}"
+          overwrite: true
+
+  tag_version:
+    name: Tag on Version Bump
+    runs-on: ubuntu-latest
+    needs: [build, build-mac]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          tags: true
+
+      - name: Get Current Version
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.version' plugin.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check for Existing Tag
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
+            echo "Tag v${{ steps.get_version.outputs.VERSION }} already exists."
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+          else
+            echo "Tag v${{ steps.get_version.outputs.VERSION }} does not exist."
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and Push Tag
+        if: steps.check_tag.outputs.TAG_EXISTS == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git tag -a "v${{ steps.get_version.outputs.VERSION }}" -m "Release version ${{ steps.get_version.outputs.VERSION }}"
+          git remote set-url origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          git push origin "v${{ steps.get_version.outputs.VERSION }}"
+
+  publish-nightly:
+    name: Publish Nightly
+    runs-on: ubuntu-latest
+    needs: [build, build-mac]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: _artifacts
+
+      - name: Delete Old Release Assets
+        uses: mknejp/delete-release-assets@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: Nightly
+          fail-if-no-assets: false
+          assets: '*'
+
+      - name: Upload Release Assets
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: _artifacts/**/*.vcvplugin
+          tag: Nightly
+          file_glob: true
