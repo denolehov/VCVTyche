@@ -143,6 +143,17 @@ jobs:
         with:
           path: _artifacts
 
+      - name: Create or Update Nightly Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: Nightly
+          release_name: Nightly
+          body: Nightly build
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Delete Old Release Assets
         uses: mknejp/delete-release-assets@v1
         with:
