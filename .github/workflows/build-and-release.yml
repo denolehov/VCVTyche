@@ -129,14 +129,17 @@ jobs:
           echo "Version from plugin.json: $VERSION"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
       - name: Check for Existing Tag
+        id: check_tag
         run: |
           if git rev-parse "v${{ steps.get_version.outputs.VERSION }}" >/dev/null 2>&1; then
             echo "Tag v${{ steps.get_version.outputs.VERSION }} already exists."
-            exit 0
+            echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
           else
             echo "Tag v${{ steps.get_version.outputs.VERSION }} does not exist."
+            echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
           fi
       - name: Create and Push Tag
+        if: steps.check_tag.outputs.TAG_EXISTS == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
