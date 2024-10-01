@@ -127,10 +127,7 @@ struct Kron final : DaisyExpander {
 	{
 		const float newVariant = getParam(VARIANT_PARAM).getValue();
 		if (newVariant != variant && variantChangeDivider.process())
-		{
 			variant = newVariant;
-			DEBUG("VARIANT IS SET TO %f", variant);
-		}
 	}
 
 	void onClock(const uint32_t clock) override
@@ -145,9 +142,6 @@ struct Kron final : DaisyExpander {
 		}
 
 		const auto clockDelta = static_cast<int32_t>(clock - globalClock);
-		if (clockDelta > 1)
-			DEBUG("CLOCK DELTA IS %d; CLOCK: %d, PREV CLOCK: %d", clockDelta, clock, globalClock);
-
 		this->clock += clockDelta;
 		globalClock = clock;
 	}

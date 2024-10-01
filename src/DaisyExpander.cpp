@@ -48,17 +48,12 @@ void DaisyExpander::propagateToDaisyChained(const Message& message)
 {
     Module* rightModule = getRightExpander().module;
     if (!isExpanderCompatible(rightModule))
-    {
         return;
-    }
 
     // ReSharper disable once CppReinterpretCastFromVoidPtr
     auto* producerMessage = reinterpret_cast<Message*>(rightModule->getLeftExpander().producerMessage);
     if (!producerMessage)
-    {
-        DEBUG("Producer message is null. Was it set in the DaisyExpander constructor?");
         return;
-    }
 
     *producerMessage = message;
     producerMessage->processed = false;

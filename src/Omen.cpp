@@ -124,10 +124,7 @@ struct Omen final : Module {
 		// ReSharper disable once CppReinterpretCastFromVoidPtr
 		auto* producerMessage = reinterpret_cast<Message*>(rightModule->getLeftExpander().producerMessage);
 		if (!producerMessage)
-		{
-			DEBUG("Producer message is null. Was it set in the DaisyExpander constructor?");
 			return;
-		}
 
 		// TODO: Message should be a struct with a proper constructor.
 		Message message;
