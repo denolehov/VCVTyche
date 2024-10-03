@@ -103,7 +103,36 @@ struct Fate final : DaisyExpander {
 		phase = 0;
 	}
 
-	// TODO: Save/load state
+	json_t* dataToJson() override
+	{
+		json_t* rootJ = json_object();
+
+		json_t* variantJ = json_real(variant);
+		json_object_set_new(rootJ, "variant", variantJ);
+
+		json_t* phaseJ = json_real(phase);
+		json_object_set_new(rootJ, "phase", phaseJ);
+
+		json_t* holdStateJ = json_integer(holdState);
+		json_object_set_new(rootJ, "holdState", holdStateJ);
+
+		return rootJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override
+	{
+		const json_t* variantJ = json_object_get(rootJ, "variant");
+		if (variantJ)
+			variant = static_cast<float>(json_real_value(variantJ));
+
+		const json_t* phaseJ = json_object_get(rootJ, "phase");
+		if (phaseJ)
+			phase = json_real_value(phaseJ);
+
+		const json_t* holdStateJ = json_object_get(rootJ, "holdState");
+		if (holdStateJ)
+			holdState = static_cast<HoldState>(json_integer_value(holdStateJ));
+	}
 };
 
 
