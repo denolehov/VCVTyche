@@ -23,7 +23,8 @@
         "Noise",
         "Low-frequency oscillator",
         "Function Generator",
-        "Clock Modulator"
+        "Clock Modulator",
+        "Logic"
       ]
     },
     {
@@ -45,6 +46,17 @@
         "Sample and hold",
         "Noise",
         "Low-frequency oscillator",
+        "Expander"
+      ]
+    },
+    {
+      "slug": "Fate",
+      "name": "Fate",
+      "description": "A determenistic Bernoulli gate",
+      "tags": [
+        "Random",
+        "Logic",
+        "Clock Modulator",
         "Expander"
       ]
     },
