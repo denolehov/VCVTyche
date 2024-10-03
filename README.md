@@ -3,7 +3,7 @@
 Tyche (`/ˈtaɪki/`) is a set of modules for VCV Rack, designed to bring controlled, reproducible randomness to the modular patches.
 
 <div align="center">
-  <img src="/res/img/tyche-modules.png" alt="tyche-modules" width="250px">
+  <img src="/res/img/tyche-modules.png" alt="tyche-modules" width="200px">
 </div>
 
 At the moment, Tyche modules include:
@@ -100,11 +100,11 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 ### Parameters, Inputs, and Outputs
 
 #### Probability
-- **Probability Knob**: Sets the likelihood of routing triggers to **Output A**. A probability of 50% means equal chances for **Output A** or **Output B**.
-- **Probability Input**: CV input to modulate the probability externally. When patched, the knob becomes an attenuverter, scaling and inverting the CV signal.
+- **Bias Knob**: Sets the likelihood of routing triggers to **Output A**. A probability of 50% means equal chances for **Output A** or **Output B**.
+- **Bias Input**: CV input (-5V to +5V) to modulate the probability externally. When patched, the bias knob is deactivated.
 
-#### Trigger Input
-- Receives incoming triggers to be routed.
+#### Gate / Trigger Input
+- Receives incoming triggers or gates to be routed.
 
 #### Reset Input
 - Resets the internal routing logic, resetting any probabilistic decisions. Useful for keeping probability routing synced with other elements in your patch.
@@ -116,13 +116,9 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 ### Usage Notes
 - **Seed Influence**: The randomness is driven by the seed from **Omen**, making the probabilistic routing consistent and repeatable across patches.
 - **External Modulation**: Use CV modulation to dynamically change the probability during a patch, allowing for more evolving and fluid routing behavior.
-- **Reset**: The **Reset Input** allows you to synchronize and reset the probabilistic decision-making process to match other rhythmic or generative events.
 - **Generative Patching**: Combine **Fate** with sequencers, random generators, or rhythmic modules for creative, probabilistic control over trigger paths.
-
-### Example Use Cases
-- **Rhythmic Variation**: Use **Fate** to probabilistically alter rhythmic patterns by routing triggers to different outputs based on probability.
 - **Dynamic Signal Routing**: Modulate probability with an LFO or envelope to create ever-changing trigger paths in generative patches.
-- **Reset for Sync**: Use the **Reset Input** to keep the probabilistic routing in sync with other modulation or clock-based events.
+- **Reset for Sync**: Use the **Reset Input** to create looping sequences.
 
 ## Blank
 
