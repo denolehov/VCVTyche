@@ -2,7 +2,9 @@
 
 Tyche (`/ˈtaɪki/`) is a set of modules for VCV Rack, designed to bring controlled, reproducible randomness to the modular patches.
 
-![Tyche modules](/res/img/tyche-modules.png)
+<div align="center">
+  <img src="/res/img/tyche-modules.png" alt="tyche-modules" width="250px">
+</div>
 
 At the moment, Tyche modules include:
 
