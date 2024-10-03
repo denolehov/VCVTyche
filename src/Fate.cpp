@@ -126,8 +126,8 @@ struct FateWidget final : ModuleWidget {
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.568, 43.5)), module, Fate::IN_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.233)), module, Fate::RESET_INPUT));
 
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 78.76)), module, Fate::OUT_A_OUTPUT));
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 96.528)), module, Fate::OUT_B_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 78.0)), module, Fate::OUT_A_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 96.5)), module, Fate::OUT_B_OUTPUT));
 	}
 };
 
