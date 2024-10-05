@@ -95,12 +95,16 @@ struct Moira final : DaisyExpander {
 	double phase = 0;
 
 	SlewFilter outSlewFilter;
+	SlewFilter auxSlewFilter;
 
 	dsp::ClockDivider variantChangeDivider;
 	dsp::SchmittTrigger triggerInput;
 	dsp::SchmittTrigger resetTrigger;
 
-	float targetOutputVoltage = 0.f;
+	float outputVoltage = 0.f;
+	float auxVoltage = 0.f;
+
+	float AUX_OFFSET = 300.f;
 
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
@@ -114,6 +118,11 @@ struct Moira final : DaisyExpander {
 		if (variant != newVariant && variantChangeDivider.process())
 			variant = newVariant;
 
+		setOutputVoltages(args.sampleTime);
+		updateOutVoltageWithSlew(args.sampleTime);
+	}
+
+	void setOutputVoltages(const float delta) {
 		const float xProbParam = getProbabilityAt(X_PROB_PARAM, X_PROB_INPUT);
 		const float yProbParam = getProbabilityAt(Y_PROB_PARAM, Y_PROB_INPUT);
 		const float zProbParam = getProbabilityAt(Z_PROB_PARAM, Z_PROB_INPUT);
@@ -121,9 +130,9 @@ struct Moira final : DaisyExpander {
 		const float totalProb = xProbParam + yProbParam + zProbParam;
 		if (totalProb <= 0.f)
 		{
-			setLight(X_PROB_LIGHT, 0.f, args.sampleTime);
-			setLight(Y_PROB_LIGHT, 0.f, args.sampleTime);
-			setLight(Z_PROB_LIGHT, 0.f, args.sampleTime);
+			setLight(X_PROB_LIGHT, 0.f, delta);
+			setLight(Y_PROB_LIGHT, 0.f, delta);
+			setLight(Z_PROB_LIGHT, 0.f, delta);
 			return;
 		}
 
@@ -131,34 +140,69 @@ struct Moira final : DaisyExpander {
 		const float yProb = yProbParam / totalProb;
 		const float zProb = zProbParam / totalProb;
 
-		setLight(X_PROB_LIGHT, xProb, args.sampleTime);
-		setLight(Y_PROB_LIGHT, yProb, args.sampleTime);
-		setLight(Z_PROB_LIGHT, zProb, args.sampleTime);
+		setLight(X_PROB_LIGHT, xProb, delta);
+		setLight(Y_PROB_LIGHT, yProb, delta);
+		setLight(Z_PROB_LIGHT, zProb, delta);
 
 		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
 		if (!triggered)
-		{
-			updateOutVoltage(args.sampleTime);
 			return;
-		}
 
-		const float noiseVal = rescale(noise->eval(variant, phase), -1.f, 1.f, 0.f, 1.f);
+		const float noiseVal = sampleNoise();
 
-		DEBUG("TOTAL: %f, X: %f, Y: %f, Z: %f, NOISE: %f", totalProb, xProb, yProb, zProb, noiseVal);
+		if (xProb >= 0.f && noiseVal < xProb) {
+			outputVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
 
-		if (xProb >= 0.f && noiseVal < xProb)
-		{
-			targetOutputVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
-		} else if (yProb >= 0.f && noiseVal <= xProb + yProb)
-		{
-			targetOutputVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
-		} else if (zProb >= 0.f)
-		{
-			targetOutputVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+			if (yProb + zProb == 0.f) {
+				auxVoltage = outputVoltage;
+				return;
+			}
+
+			const float auxYprob = yProb / (yProb + zProb);
+			if (sampleNoise(AUX_OFFSET) < auxYprob) {
+				auxVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+			} else {
+				auxVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+			}
+
+		} else if (yProb >= 0.f && noiseVal <= xProb + yProb) {
+			outputVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+
+			if (xProb + zProb == 0.f) {
+				auxVoltage = outputVoltage;
+				return;
+			}
+
+			const float auxXprob = xProb / (xProb + zProb);
+			if (sampleNoise(AUX_OFFSET) < auxXprob) {
+				auxVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+			} else {
+				auxVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+			}
+
+		} else if (zProb > 0.f) {
+			outputVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+
+			if (xProb + yProb == 0.f) {
+				auxVoltage = outputVoltage;
+				return;
+			}
+
+			float auxXprob = xProb / (xProb + yProb);
+			if (sampleNoise(AUX_OFFSET) < auxXprob) {
+				auxVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+			} else {
+				auxVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+			}
 		}
 	}
 
-	void updateOutVoltage(float delta)
+	float sampleNoise(const float offset = 0.f) const
+	{
+		return rescale(noise->eval(variant, phase + offset), -1.f, 1.f, 0.f, 1.f);
+	}
+
+	void updateOutVoltageWithSlew(float delta)
 	{
 		float slewAmount = getParam(SLEW_PARAM).getValue();
 		if (slewAmount <= std::log2(1e-3f))
@@ -170,8 +214,8 @@ struct Moira final : DaisyExpander {
 
 		const float slewDelta = slew * delta;
 
-		const float outputVoltage = outSlewFilter.process(targetOutputVoltage, slewDelta);
-		getOutput(OUT_OUTPUT).setVoltage(outputVoltage);
+		getOutput(OUT_OUTPUT).setVoltage(outSlewFilter.process(outputVoltage, slewDelta));
+		getOutput(AUX_OUTPUT).setVoltage(auxSlewFilter.process(auxVoltage, slewDelta));
 	}
 
 	void setLight(const LightId lightId, const float val, const float delta)
