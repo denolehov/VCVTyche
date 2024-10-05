@@ -68,6 +68,12 @@
         "Blank",
         "Expander"
       ]
+    },
+    {
+      "slug": "Moira",
+      "name": "Moira",
+      "description": "",
+      "tags": []
     }
   ]
 }
