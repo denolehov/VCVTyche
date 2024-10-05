@@ -2,6 +2,23 @@
 #include "plugin.hpp"
 
 
+struct SlewFilter
+{
+	float value = 0.f;
+
+	float process(const float in, const float slew)
+	{
+		value += math::clamp(in - value, -slew, slew);
+		return value;
+	}
+
+	float getValue() const
+	{
+		return value;
+	}
+};
+
+
 struct Moira final : DaisyExpander {
 	enum ParamId {
 		X_PROB_PARAM,
@@ -46,7 +63,18 @@ struct Moira final : DaisyExpander {
 		configParam(Y_VALUE_PARAM, -10.f, 10.f, 0.f, "Y");
 		configParam(Z_VALUE_PARAM, -10.f, 10.f, 0.f, "Z");
 		configParam(VARIANT_PARAM, 1.f, 128.f, 1.f, "Variant");
-		configParam(SLEW_PARAM, 0.f, 1000.f, 0.f, "Slew");
+
+		struct SlewQuantity : ParamQuantity
+		{
+			float getDisplayValue() override
+			{
+				if (getValue() <= getMinValue())
+					return 0.f;
+				return ParamQuantity::getDisplayValue();
+			}
+		};
+		configParam<SlewQuantity>(SLEW_PARAM, std::log2(1e-3f), std::log2(10.f), std::log2(1e-3f), "Slew", " ms/V", 2, 1000);
+
 		configInput(X_PROB_INPUT, "X Probability");
 		configInput(Y_PROB_INPUT, "Y Probability");
 		configInput(Z_PROB_INPUT, "Z Probability");
@@ -66,9 +94,13 @@ struct Moira final : DaisyExpander {
 	float variant = 1.f;
 	double phase = 0;
 
+	SlewFilter outSlewFilter;
+
 	dsp::ClockDivider variantChangeDivider;
 	dsp::SchmittTrigger triggerInput;
 	dsp::SchmittTrigger resetTrigger;
+
+	float targetOutputVoltage = 0.f;
 
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
@@ -105,7 +137,10 @@ struct Moira final : DaisyExpander {
 
 		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
 		if (!triggered)
+		{
+			updateOutVoltage(args.sampleTime);
 			return;
+		}
 
 		const float noiseVal = rescale(noise->eval(variant, phase), -1.f, 1.f, 0.f, 1.f);
 
@@ -113,17 +148,30 @@ struct Moira final : DaisyExpander {
 
 		if (xProb >= 0.f && noiseVal < xProb)
 		{
-			const float valueX = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
-			outputs[OUT_OUTPUT].setVoltage(valueX);
+			targetOutputVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
 		} else if (yProb >= 0.f && noiseVal <= xProb + yProb)
 		{
-			const float valueY = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
-			outputs[OUT_OUTPUT].setVoltage(valueY);
+			targetOutputVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
 		} else if (zProb >= 0.f)
 		{
-			const float valueZ = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
-			outputs[OUT_OUTPUT].setVoltage(valueZ);
+			targetOutputVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
 		}
+	}
+
+	void updateOutVoltage(float delta)
+	{
+		float slewAmount = getParam(SLEW_PARAM).getValue();
+		if (slewAmount <= std::log2(1e-3f))
+			slewAmount = -INFINITY;
+
+		float slew = INFINITY;
+		if (std::isfinite(slewAmount))
+			slew = dsp::exp2_taylor5(-slewAmount + 30.f) / std::exp2(30.f);
+
+		const float slewDelta = slew * delta;
+
+		const float outputVoltage = outSlewFilter.process(targetOutputVoltage, slewDelta);
+		getOutput(OUT_OUTPUT).setVoltage(outputVoltage);
 	}
 
 	void setLight(const LightId lightId, const float val, const float delta)
