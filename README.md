@@ -13,20 +13,21 @@ At the moment, Tyche modules include:
 - **Kron**: a probabilistic trigger generator, emitting triggers based on clock division and density.
 - **Fate**: a probabilistic trigger routing module (Bernoulli gate) that routes incoming triggers to one of two outputs based on a user-defined probability.
 - **Moira**: a probabilistic voltage selector that outputs one of three voltages based on defined probabilities.
-- **Blank**: a simple utility module that can be used to visually group the modules without breaking the expander chain.
+- **Blank**: allows to visually group the modules without breaking the expander chain.
 
 **Omen** is the only standalone module in the collection, all other modules are its expanders. Connect **Omen** with just one module for a simple setup, or chain dozens of them to create a central randomness hub controlling the entire patch.
 
 ## Omen
 
-"Omen" is the central module of the Tyche collection, generating the "seed" that controls the randomness of all connected modules. The seed allows the creation of deterministic, reproducible random patterns across patch saves.
+"Omen" is the central module of the Tyche collection, generating the "seed" that controls the randomness of
+all connected modules. The seed allows the creation of deterministic, reproducible random patterns across patch saves.
 
 ### Parameters, Inputs, and Outputs
 
 #### Seed Buttons
 
 - Six momentary buttons cycle through six states (Alpha, Beta, Gamma, Delta, Epsilon, Zeta), changing the seed value and corresponding LED color.
-- The seed is saved with the patch, and 46,656 unique seeds are possible.
+- The seed is saved with the patch. Can generate 46,656 unique seeds.
 
 #### Clock Input
 
@@ -45,11 +46,11 @@ At the moment, Tyche modules include:
 #### Pace
 
 - **Pace Slider**: Controls noise evolution speed (0.001 Hz to 440 Hz).
-- **Pace Input**: CV input to modulate pace. When connected, the slider acts as an attenuverter.
+- **Pace Input**: CV input (-5V to +5V) to modulate pace. When connected, the CV input attenuates the slider's value.
 
 #### Variant
 
-- **Variant Knob**: Changes the characteristics of the noise (1-128).
+- **Variant Knob**: Generates a new, internal to this module random pattern (1-128).
 
 #### Sample and Hold Input
 
@@ -57,7 +58,7 @@ At the moment, Tyche modules include:
 
 #### Reset Input
 
-- Resets the noise generator to its initial state.
+- Resets the internal random pattern to the first step.
 
 #### Output
 
@@ -73,18 +74,19 @@ At the moment, Tyche modules include:
 "Kron" is a probabilistic trigger generator, outputting triggers at clock divisions based on the density parameter, influenced by Omen's seed.
 
 This module is heavily inspired by the [Rhythm Explorer](https://github.com/DaveBenham/VenomModules?tab=readme-ov-file#rhythm-explorer) from VenomModules.
+Where Kron can be seen as a single strip of the Rhythm Explorer.
 
 ### Parameters, Inputs, and Outputs
 
 #### Density
 
-- **Density Slider**: Controls trigger probability at each clock division (0%-100%).
-- **Density Input**: CV input to modulate density (-5V to +5V). When patched, the density slider becomes an attenuverter.
+- **Density Slider**: Controls trigger probability at each clock division (0%-100%). Acts as an attenuator when the density input is connected.
+- **Density Input**: CV input to modulate density (-5V to +5V). When patched, the density slider attenuates the CV input.
 - **Density Light**: Yellow for triggers, Red for muted triggers, Off for no trigger.
 
 #### Variant
 
-- **Variant Knob**: Alters randomness characteristics (1-128).
+- **Variant Knob**: Generates a new, internal to this module random pattern (1-128).
 
 #### Mute Input
 
@@ -93,7 +95,7 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 
 #### Reset Input
 
-- Resets the internal clock counter.
+- Resets the internal random pattern to the first step.
 
 #### Trigger Output
 
@@ -102,16 +104,15 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 ### Usage Notes
 
 - **Clock Division**: Select clock divisions from 1/2 to 1/16, with triplet and dotted options available via right-click menu.
-- **Synchronization**: Use reset to synchronize Kron with other modules.
-- **Mute**: Useful for performance control or chaining Krons together for a linear rhythm.
-- **Variants**: Experiment with different variant settings to alter randomness patterns without affecting the rest of the connected Tyche modules.
-- **Dynamic Rhythms**: Modulate density for evolving patterns.
+- **Mute**: Useful for chaining Krons together for a linear rhythm.
 - **Gates**: Patch Kron with VCV Gates (or any other gate source) to convert triggers to gates.
   - **Tip**: Modulate gate length with Tale!
 
 ## Fate
 
-**Fate** is a probabilistic trigger routing module (Bernoulli gate) in the Tyche collection. It routes incoming triggers to one of two outputs based on a user-defined probability, with its randomness influenced by the seed from the **Omen** module.
+**Fate** is a probabilistic trigger routing module (Bernoulli gate) in the Tyche collection.
+It routes incoming triggers to one of two outputs based on a user-defined probability,
+with its randomness influenced by the seed from the **Omen** module.
 
 ### Parameters, Inputs, and Outputs
 
@@ -122,24 +123,20 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 
 #### Gate / Trigger Input
 
-- Receives incoming triggers or gates to be routed.
+- **Gate Input**: Receives incoming triggers or gates to be routed.
 
 #### Reset Input
 
-- Resets the internal routing logic, resetting any probabilistic decisions. Useful for keeping probability routing synced with other elements in your patch.
+- **Reset Input**: Resets the internal random pattern to the first step.
 
 #### Outputs
 
-- **Output A**: Receives the trigger if the probabilistic decision favors this output.
+- **Output A**: Receives the input trigger if the probabilistic decision favors this output.
 - **Output B**: Receives the trigger if not routed to **Output A**.
 
 ### Usage Notes
 
 - **Latch mode**: Use right-click context menu to enable latch mode, where the last trigger is held until the next trigger arrives.
-- **Seed Influence**: The randomness is driven by the seed from **Omen**, making the probabilistic routing consistent and repeatable across patches.
-- **External Modulation**: Use CV modulation to dynamically change the probability during a patch, allowing for more evolving and fluid routing behavior.
-- **Generative Patching**: Combine **Fate** with sequencers, random generators, or rhythmic modules for creative, probabilistic control over trigger paths.
-- **Dynamic Signal Routing**: Modulate probability with an LFO or envelope to create ever-changing trigger paths in generative patches.
 - **Reset for Sync**: Use the **Reset Input** to create looping sequences.
 
 ## Moira
@@ -150,52 +147,38 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 
 #### Probabilities
 
-- **X Probability Slider**: Sets the relative probability for voltage **X** (0%-100%).
-- **Y Probability Slider**: Sets the relative probability for voltage **Y** (0%-100%).
-- **Z Probability Slider**: Sets the relative probability for voltage **Z** (0%-100%).
-- **X Probability Input**: CV input (-5V to +5V) to modulate the probability of **X**. When patched, the slider acts as an attenuator for the patched signal.
-- **Y Probability Input**: CV input to modulate the probability of **Y**.
-- **Z Probability Input**: CV input to modulate the probability of **Z**.
+- **X/Y/Z Probability Sliders**: Sets the relative probability for **X**/**Y**/**Z** inputs (0%-100%).
+- **X/Y/Z Probability Inputs**: CV input (-5V to +5V) to modulate the probability of **X**/**Y**/**Z**. When patched, the slider acts as an attenuator for the patched signal.
 
 #### Voltages
 
-- **X Voltage Knob**: Sets the output voltage for **X** (-10V to +10V).
-- **Y Voltage Knob**: Sets the output voltage for **Y** (-10V to +10V).
-- **Z Voltage Knob**: Sets the output voltage for **Z** (-10V to +10V).
-- **X Voltage Input**: CV input to override the **X** voltage. When patched, the knob acts as an attenuverter.
-- **Y Voltage Input**: CV input to override the **Y** voltage.
-- **Z Voltage Input**: CV input to override the **Z** voltage.
+- **X/Y/Z Voltage Knobs**: Sets the output voltage for **X**/**Y**/**Z** values (-10V to +10V).
+- **X/Y/Z Voltage Inputs**: CV inputs to override the **X**/**Y**/**Z** values. When patched, the knob acts as an attenuator for an incoming voltage.
 
 #### Variant
 
-- **Variant Knob**: Changes the characteristics of the randomness (1-128).
+- **Variant Knob**: Generates a new, internal to this module random pattern (1-128).
 
 #### Fade
 
-- **Fade Knob**: Sets the duration of voltage crossfade when switching outputs (0s to 20s).
+- **Fade Knob**: Sets the duration of voltage crossfade when switching outputs (0s to 20s). It uses an exponential curve for smooth transitions.
 
 #### Trigger Input
 
-- **Trigger Input**: Triggers the probabilistic selection of **X**, **Y**, or **Z**.
+- **Trigger Input**: Triggers the selection of **X**, **Y**, or **Z**.
 
 #### Reset Input
 
-- **Reset Input**: Resets the internal random number generator.
+- **Reset Input**: Resets the internal random pattern to the first step.
 
 #### Outputs
 
 - **Main Output**: Outputs the selected voltage (**X**, **Y**, or **Z**).
-- **AUX Output**: Outputs a secondary voltage, based on the probabilities of the other two voltages.
+- **AUX Output**: Outputs a secondary voltage based on the remaining probabilities of the other two voltages not selected by the main output.
 
 ### Usage Notes
 
-- **Probabilistic Selection**: Use the probability sliders and inputs to define the likelihood of each voltage being selected when a trigger is received.
 - **Fade**: Use the fade parameter to smoothly transition between voltages when the selection changes.
-- **Variant**: Adjust the variant knob to change the pattern of randomness without affecting other connected Tyche modules.
-- **Seed Influence**: The randomness is driven by the seed from **Omen**, making the probabilistic selection consistent and repeatable across patches.
-- **Dynamic Probabilities**: Modulate the probability inputs for evolving probabilistic behavior.
-- **Multi-dimensional Control**: Use the **AUX Output** for additional modulation possibilities, as it provides a secondary selection based on the remaining voltages.
-- **Reset for Sync**: Use the **Reset Input** to synchronize the random selection with other elements in your patch.
 
 ## Blank
 
