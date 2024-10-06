@@ -178,6 +178,8 @@ with its randomness influenced by the seed from the **Omen** module.
 
 ### Usage Notes
 
+- **Relative Probabilities**: **X**/**Y**/**Z** probabilities are relative to each other, e.g. if all sliders are set to the same value, the resulting probability of each value is 33.3%.
+- **Lights**: The brightness of the slider indicates the probability of the corresponding voltage. Green light means the voltage is selected for the main output, blue light means that the voltage is selected for the auxiliary output.
 - **Fade**: Use the fade parameter to smoothly transition between voltages when the selection changes.
 
 ## Blank
