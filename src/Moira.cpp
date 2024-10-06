@@ -131,6 +131,7 @@ struct Moira final : DaisyExpander {
 		configOutput(OUT_OUTPUT, "Main");
 
 		variantChangeDivider.setDivision(16384);
+		lightDivider.setDivision(512);
 	}
 
 	float PHASE_ADVANCE_SPEED = dsp::FREQ_A4;
@@ -142,6 +143,8 @@ struct Moira final : DaisyExpander {
 	CrossFadeFilter auxCrossfadeFilter;
 
 	dsp::ClockDivider variantChangeDivider;
+	dsp::ClockDivider lightDivider;
+
 	dsp::SchmittTrigger triggerInput;
 	dsp::SchmittTrigger resetTrigger;
 
@@ -150,44 +153,97 @@ struct Moira final : DaisyExpander {
 	OutputChangeTracker mainOutputTracker;
 	OutputChangeTracker auxOutputTracker;
 
+	struct Probabilities {
+		float x = 0.f;
+		float y = 0.f;
+		float z = 0.f;
+
+		Probabilities(float x, float y, float z) {
+			const float totalProb = x + y + z;
+			if (totalProb > 0.f) {
+				this->x = x / totalProb;
+				this->y = y / totalProb;
+				this->z = z / totalProb;
+			}
+		}
+
+		float total() const {
+			return x + y + z;
+		}
+	};
+
+	Probabilities p;
+
+	void calculateProbabilities() {
+		const float xProbParam = getProbabilityAt(X_PROB_PARAM, X_PROB_INPUT);
+		const float yProbParam = getProbabilityAt(Y_PROB_PARAM, Y_PROB_INPUT);
+		const float zProbParam = getProbabilityAt(Z_PROB_PARAM, Z_PROB_INPUT);
+
+		p = Probabilities(xProbParam, yProbParam, zProbParam);
+	}
+
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
 
+		phase += args.sampleTime * PHASE_ADVANCE_SPEED;
+
 		if (resetTrigger.process(getInput(RESET_INPUT).getVoltage()))
 			reset();
-
-		phase += args.sampleTime * PHASE_ADVANCE_SPEED;
 
 		const float newVariant = getParam(VARIANT_PARAM).getValue();
 		if (variant != newVariant && variantChangeDivider.process())
 			variant = newVariant;
 
-		setOutputVoltages(args.sampleTime);
-		updateOutVoltagesWithSlew(args.sampleTime);
+		calculateProbabilities();
+		updatedTrackedOutputs();
+		updateOutVoltagesWithFade(args.sampleTime);
+		updateLights(args.sampleTime);
 	}
 
-	void setOutputVoltages(const float delta) {
-		const float xProbParam = getProbabilityAt(X_PROB_PARAM, X_PROB_INPUT);
-		const float yProbParam = getProbabilityAt(Y_PROB_PARAM, Y_PROB_INPUT);
-		const float zProbParam = getProbabilityAt(Z_PROB_PARAM, Z_PROB_INPUT);
-
-		const float totalProb = xProbParam + yProbParam + zProbParam;
+	void updateLights(const float deltaTime) {
 		if (totalProb <= 0.f)
 		{
-			setLight(X_PROB_LIGHT, 0.f, delta);
-			setLight(Y_PROB_LIGHT, 0.f, delta);
-			setLight(Z_PROB_LIGHT, 0.f, delta);
+			setLightBrightness(X_PROB_LIGHT, 0.f, delta);
+			setLightBrightness(Y_PROB_LIGHT, 0.f, delta);
+			setLightBrightness(Z_PROB_LIGHT, 0.f, delta);
 			return;
 		}
 
-		const float xProb = xProbParam / totalProb;
-		const float yProb = yProbParam / totalProb;
-		const float zProb = zProbParam / totalProb;
+		setLightBrightness(X_PROB_LIGHT, xProb, delta);
+		setLightBrightness(Y_PROB_LIGHT, yProb, delta);
+		setLightBrightness(Z_PROB_LIGHT, zProb, delta);
 
-		setLight(X_PROB_LIGHT, xProb, delta);
-		setLight(Y_PROB_LIGHT, yProb, delta);
-		setLight(Z_PROB_LIGHT, zProb, delta);
+		if (mainOutputTracker.hasChanged()) {
+			switch (mainOutputTracker.getCurrentOutput()) {
+				case OutputChangeTracker::X:
+					DEBUG("X IS ORANGE");
+					setLightColor(X_PROB_LIGHT, ORANGE, args.sampleTime);
+					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
+					break;
+				case OutputChangeTracker::Y:
+					DEBUG("Y IS ORANGE");
+					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Y_PROB_LIGHT, ORANGE, args.sampleTime);
+					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
+					break;
+				case OutputChangeTracker::Z:
+					DEBUG("Z IS ORANGE");
+					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Z_PROB_LIGHT, ORANGE, args.sampleTime);
+					break;
+				default:
+					DEBUG("ALL WHITE");
+					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
+					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
+					break;
+			}
+		}
+	}
 
+	void updatedTrackedOutputs() {
 		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
 		if (!triggered) {
 			mainOutputTracker.process(mainOutputTracker.getCurrentOutput());
@@ -197,45 +253,45 @@ struct Moira final : DaisyExpander {
 
 		const float noiseVal = sampleNoise();
 
-		if (xProb >= 0.f && noiseVal < xProb) {
+		if (p.x >= 0.f && noiseVal < p.x) {
 			mainOutputTracker.process(OutputChangeTracker::X);
 
-			if (yProb + zProb == 0.f) {
+			if (p.y + p.z == 0.f) {
 				auxOutputTracker.process(OutputChangeTracker::X);
 				return;
 			}
 
-			const float auxYprob = yProb / (yProb + zProb);
+			const float auxYprob = p.y / (p.y + p.z);
 			if (sampleNoise(AUX_OFFSET) < auxYprob) {
 				auxOutputTracker.process(OutputChangeTracker::Y);
 			} else {
 				auxOutputTracker.process(OutputChangeTracker::Z);
 			}
 
-		} else if (yProb >= 0.f && noiseVal <= xProb + yProb) {
+		} else if (p.y >= 0.f && noiseVal <= p.x + p.y) {
 			mainOutputTracker.process(OutputChangeTracker::Y);
 
-			if (xProb + zProb == 0.f) {
+			if (p.x + p.z == 0.f) {
 				auxOutputTracker.process(OutputChangeTracker::Y);
 				return;
 			}
 
-			const float auxXprob = xProb / (xProb + zProb);
+			const float auxXprob = p.x / (p.x + p.z);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
 				auxOutputTracker.process(OutputChangeTracker::X);
 			} else {
 				auxOutputTracker.process(OutputChangeTracker::Z);
 			}
 
-		} else if (zProb > 0.f) {
+		} else if (p.z > 0.f) {
 			mainOutputTracker.process(OutputChangeTracker::Z);
 
-			if (xProb + yProb == 0.f) {
+			if (p.x + p.y == 0.f) {
 				auxOutputTracker.process(OutputChangeTracker::Z);
 				return;
 			}
 
-			const float auxXprob = xProb / (xProb + yProb);
+			const float auxXprob = p.x / (p.x + p.y);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
 				auxOutputTracker.process(OutputChangeTracker::X);
 			} else {
@@ -249,7 +305,7 @@ struct Moira final : DaisyExpander {
 		return rescale(noise->eval(variant, phase + offset), -1.f, 1.f, 0.f, 1.f);
 	}
 
-	void updateOutVoltagesWithSlew(const float delta)
+	void updateOutVoltagesWithFade(const float delta)
 	{
 		const float fadeDuration = getParam(FADE_PARAM).getValue();
 
@@ -282,11 +338,28 @@ struct Moira final : DaisyExpander {
 		}
 	}
 
-	void setLight(const LightId lightId, const float val, const float delta)
+	enum Color { WHITE, ORANGE };
+
+	void setLightBrightness(const LightId lightId, const float val, const float delta)
 	{
 		getLight(lightId + 0).setBrightnessSmooth(1.f * val, delta);
 		getLight(lightId + 1).setBrightnessSmooth(1.f * val, delta);
 		getLight(lightId + 2).setBrightnessSmooth(1.f * val, delta);
+	}
+
+	void setLightColor(const LightId lightId, const Color color, const float delta) {
+		switch (color) {
+		case ORANGE:
+			getLight(lightId + 0).setBrightnessSmooth(getLight(lightId + 0).getBrightness(), delta);
+			getLight(lightId + 1).setBrightnessSmooth(getLight(lightId + 1).getBrightness(), delta);
+			getLight(lightId + 2).setBrightness(0.f);
+			break;
+		default:
+			getLight(lightId + 0).setBrightnessSmooth(getLight(lightId + 0).getBrightness(), delta);
+			getLight(lightId + 1).setBrightnessSmooth(getLight(lightId + 1).getBrightness(), delta);
+			getLight(lightId + 2).setBrightnessSmooth(getLight(lightId + 2).getBrightness(), delta);
+			break;
+		}
 	}
 
 	float getProbabilityAt(const ParamId probParam, const InputId probInput)
