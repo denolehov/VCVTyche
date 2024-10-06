@@ -2,19 +2,65 @@
 #include "plugin.hpp"
 
 
-struct SlewFilter
-{
-	float value = 0.f;
+struct CrossFadeFilter {
+	float fadeTime = 0.f, fadeProgress = 0.f;
+	bool isFading = false;
 
-	float process(const float in, const float slew)
-	{
-		value += clamp(in - value, -slew, slew);
-		return value;
+	void start(const float duration) {
+		if (duration <= 0.f) {
+			isFading = false;
+		} else {
+			fadeTime = duration;
+			fadeProgress = 0.f;
+			isFading = true;
+		}
 	}
 
-	float getValue() const
-	{
+	float process(const float prevVoltage, const float currVoltage, const float deltaTime) {
+		if (!isFading)
+			return currVoltage;
+
+		fadeProgress += deltaTime;
+		const float t = clamp(fadeProgress / fadeTime, 0.f, 1.f);
+		const float value = crossfade(prevVoltage, currVoltage, t);
+
+		if (t >= 1.f)
+			isFading = false;
+
 		return value;
+	}
+};
+
+
+struct OutputChangeTracker {
+	enum Output { X, Y, Z, NONE };
+	Output currentOutput = NONE;
+	Output previousOutput = NONE;
+
+	bool hasOutputChanged = false;
+
+	bool process(const Output newState) {
+		hasOutputChanged = false;
+
+		if (newState != currentOutput) {
+			previousOutput = currentOutput;
+			currentOutput = newState;
+			hasOutputChanged = true;
+		}
+
+		return hasOutputChanged;
+	}
+
+	Output getPreviousOutput() const {
+		return previousOutput;
+	}
+
+	Output getCurrentOutput() const {
+		return currentOutput;
+	}
+
+	bool hasChanged() const {
+		return hasOutputChanged;
 	}
 };
 
@@ -28,7 +74,7 @@ struct Moira final : DaisyExpander {
 		Y_VALUE_PARAM,
 		Z_VALUE_PARAM,
 		VARIANT_PARAM,
-		SLEW_PARAM,
+		FADE_PARAM,
 		PARAMS_LEN
 	};
 	enum InputId {
@@ -63,17 +109,7 @@ struct Moira final : DaisyExpander {
 		configParam(Y_VALUE_PARAM, -10.f, 10.f, 0.f, "Y");
 		configParam(Z_VALUE_PARAM, -10.f, 10.f, 0.f, "Z");
 		configParam(VARIANT_PARAM, 1.f, 128.f, 1.f, "Variant");
-
-		struct SlewQuantity : ParamQuantity
-		{
-			float getDisplayValue() override
-			{
-				if (getValue() <= getMinValue())
-					return 0.f;
-				return ParamQuantity::getDisplayValue();
-			}
-		};
-		configParam<SlewQuantity>(SLEW_PARAM, std::log2(1e-3f), std::log2(10.f), std::log2(1e-3f), "Slew", " ms/V", 2, 1000);
+		configParam(FADE_PARAM, 0.f, 20.f, 0.f, "Fade duration", " s");
 
 		configInput(X_PROB_INPUT, "X Probability");
 		configInput(Y_PROB_INPUT, "Y Probability");
@@ -94,8 +130,8 @@ struct Moira final : DaisyExpander {
 	float variant = 1.f;
 	double phase = 0;
 
-	SlewFilter outSlewFilter;
-	SlewFilter auxSlewFilter;
+	CrossFadeFilter outCrossfadeFilter;
+	CrossFadeFilter auxCrossfadeFilter;
 
 	dsp::ClockDivider variantChangeDivider;
 	dsp::SchmittTrigger triggerInput;
@@ -103,10 +139,8 @@ struct Moira final : DaisyExpander {
 
 	float AUX_OFFSET = 300.f;
 
-	enum Output { X, Y, Z, NONE };
-
-	Output activeOutput = NONE;
-	Output activeAuxOutput = NONE;
+	OutputChangeTracker mainOutputTracker;
+	OutputChangeTracker auxOutputTracker;
 
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
@@ -147,54 +181,57 @@ struct Moira final : DaisyExpander {
 		setLight(Z_PROB_LIGHT, zProb, delta);
 
 		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
-		if (!triggered)
+		if (!triggered) {
+			mainOutputTracker.process(mainOutputTracker.getCurrentOutput());
+			auxOutputTracker.process(auxOutputTracker.getCurrentOutput());
 			return;
+		}
 
 		const float noiseVal = sampleNoise();
 
 		if (xProb >= 0.f && noiseVal < xProb) {
-			activeOutput = X;
+			mainOutputTracker.process(OutputChangeTracker::X);
 
 			if (yProb + zProb == 0.f) {
-				activeAuxOutput = X;
+				auxOutputTracker.process(OutputChangeTracker::X);
 				return;
 			}
 
 			const float auxYprob = yProb / (yProb + zProb);
 			if (sampleNoise(AUX_OFFSET) < auxYprob) {
-				activeAuxOutput = Y;
+				auxOutputTracker.process(OutputChangeTracker::Y);
 			} else {
-				activeAuxOutput = Z;
+				auxOutputTracker.process(OutputChangeTracker::Z);
 			}
 
 		} else if (yProb >= 0.f && noiseVal <= xProb + yProb) {
-			activeOutput = Y;
+			mainOutputTracker.process(OutputChangeTracker::Y);
 
 			if (xProb + zProb == 0.f) {
-				activeAuxOutput = Y;
+				auxOutputTracker.process(OutputChangeTracker::Y);
 				return;
 			}
 
 			const float auxXprob = xProb / (xProb + zProb);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
-				activeAuxOutput = X;
+				auxOutputTracker.process(OutputChangeTracker::X);
 			} else {
-				activeAuxOutput = Z;
+				auxOutputTracker.process(OutputChangeTracker::Z);
 			}
 
 		} else if (zProb > 0.f) {
-			activeOutput = Z;
+			mainOutputTracker.process(OutputChangeTracker::Z);
 
 			if (xProb + yProb == 0.f) {
-				activeAuxOutput = Z;
+				auxOutputTracker.process(OutputChangeTracker::Z);
 				return;
 			}
 
 			const float auxXprob = xProb / (xProb + yProb);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
-				activeAuxOutput = X;
+				auxOutputTracker.process(OutputChangeTracker::X);
 			} else {
-				activeAuxOutput = Y;
+				auxOutputTracker.process(OutputChangeTracker::Y);
 			}
 		}
 	}
@@ -206,32 +243,31 @@ struct Moira final : DaisyExpander {
 
 	void updateOutVoltagesWithSlew(const float delta)
 	{
-		float slewAmount = getParam(SLEW_PARAM).getValue();
-		if (slewAmount <= std::log2(1e-3f))
-			slewAmount = -INFINITY;
+		const float fadeDuration = getParam(FADE_PARAM).getValue();
 
-		float slew = INFINITY;
-		if (std::isfinite(slewAmount))
-			slew = dsp::exp2_taylor5(-slewAmount + 30.f) / std::exp2(30.f);
+		if (mainOutputTracker.hasChanged())
+			outCrossfadeFilter.start(fadeDuration);
 
-		const float slewDelta = slew * delta;
+		if (auxOutputTracker.hasChanged())
+			auxCrossfadeFilter.start(fadeDuration);
 
-		const float outVoltage = getActiveOutputVoltage(activeOutput);
-		const float auxVoltage = getActiveOutputVoltage(activeAuxOutput);
+		const float prevOutVoltage = getActiveOutputVoltage(mainOutputTracker.getPreviousOutput());
+		const float currOutVoltage = getActiveOutputVoltage(mainOutputTracker.getCurrentOutput());
+		getOutput(OUT_OUTPUT).setVoltage(outCrossfadeFilter.process(prevOutVoltage, currOutVoltage, delta));
 
-		getOutput(OUT_OUTPUT).setVoltage(outSlewFilter.process(outVoltage, slewDelta));
-		getOutput(AUX_OUTPUT).setVoltage(auxSlewFilter.process(auxVoltage, slewDelta));
+		const float prevAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getPreviousOutput());
+		const float currAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getCurrentOutput());
+		getOutput(AUX_OUTPUT).setVoltage(auxCrossfadeFilter.process(prevAuxVoltage, currAuxVoltage, delta));
 	}
 
-	float getActiveOutputVoltage(const Output output)
+	float getActiveOutputVoltage(const OutputChangeTracker::Output output)
 	{
-		switch (output)
-		{
-		case X:
+		switch (output) {
+		case OutputChangeTracker::X:
 			return getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
-		case Y:
+		case OutputChangeTracker::Y:
 			return getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
-		case Z:
+		case OutputChangeTracker::Z:
 			return getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
 		default:
 			return 0.f;
@@ -294,7 +330,7 @@ struct MoiraWidget final : ModuleWidget {
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.86, 60.0)), module, Moira::Y_VALUE_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(38.073, 60.0)), module, Moira::Z_VALUE_PARAM));
 		addParam(createParamCentered<RoundSmallBlackSnapKnob>(mm2px(Vec(7.647, 96.5)), module, Moira::VARIANT_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.695, 96.5)), module, Moira::SLEW_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.695, 96.5)), module, Moira::FADE_PARAM));
 
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 43.5)), module, Moira::X_PROB_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 43.5)), module, Moira::Y_PROB_INPUT));
