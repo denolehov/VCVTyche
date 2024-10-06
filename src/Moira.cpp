@@ -22,12 +22,20 @@ struct CrossFadeFilter {
 
 		fadeProgress += deltaTime;
 		const float t = clamp(fadeProgress / fadeTime, 0.f, 1.f);
-		const float value = crossfade(prevVoltage, currVoltage, t);
+
+		const float value = crossfade(prevVoltage, currVoltage, easeInOut(t));
 
 		if (t >= 1.f)
 			isFading = false;
 
 		return value;
+	}
+
+	static float easeInOut(float t) {
+		if (t < 0.5)
+			return 4 * t * t * t;
+
+		return (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
 	}
 };
 
