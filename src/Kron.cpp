@@ -38,18 +38,18 @@ struct Kron final : DaisyExpander {
 	bool clockProcessed = true;
 
 	const std::array<uint32_t, 12> divisionMapping = {
-		48,	// 1/2
-		32,	// 1/2t
+		48, // 1/2
+		32, // 1/2t
 		72, // 1/2.
 		24, // 1/4
 		16, // 1/4t
 		36, // 1/4.
 		12, // 1/8
-		8,	// 1/8t
+		8,  // 1/8t
 		18, // 1/8.
-		6,	// 1/16
-		4,	// 1/16t
-		9	// 1/16.
+		6,  // 1/16
+		4,  // 1/16t
+		9   // 1/16.
 	};
 
 	dsp::SchmittTrigger resetTrigger;
