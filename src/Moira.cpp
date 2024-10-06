@@ -167,6 +167,8 @@ struct Moira final : DaisyExpander {
 			}
 		}
 
+		Probabilities() = default;
+
 		float total() const {
 			return x + y + z;
 		}
@@ -197,50 +199,7 @@ struct Moira final : DaisyExpander {
 		calculateProbabilities();
 		updatedTrackedOutputs();
 		updateOutVoltagesWithFade(args.sampleTime);
-		updateLights(args.sampleTime);
-	}
-
-	void updateLights(const float deltaTime) {
-		if (totalProb <= 0.f)
-		{
-			setLightBrightness(X_PROB_LIGHT, 0.f, delta);
-			setLightBrightness(Y_PROB_LIGHT, 0.f, delta);
-			setLightBrightness(Z_PROB_LIGHT, 0.f, delta);
-			return;
-		}
-
-		setLightBrightness(X_PROB_LIGHT, xProb, delta);
-		setLightBrightness(Y_PROB_LIGHT, yProb, delta);
-		setLightBrightness(Z_PROB_LIGHT, zProb, delta);
-
-		if (mainOutputTracker.hasChanged()) {
-			switch (mainOutputTracker.getCurrentOutput()) {
-				case OutputChangeTracker::X:
-					DEBUG("X IS ORANGE");
-					setLightColor(X_PROB_LIGHT, ORANGE, args.sampleTime);
-					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
-					break;
-				case OutputChangeTracker::Y:
-					DEBUG("Y IS ORANGE");
-					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Y_PROB_LIGHT, ORANGE, args.sampleTime);
-					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
-					break;
-				case OutputChangeTracker::Z:
-					DEBUG("Z IS ORANGE");
-					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Z_PROB_LIGHT, ORANGE, args.sampleTime);
-					break;
-				default:
-					DEBUG("ALL WHITE");
-					setLightColor(X_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Y_PROB_LIGHT, WHITE, args.sampleTime);
-					setLightColor(Z_PROB_LIGHT, WHITE, args.sampleTime);
-					break;
-			}
-		}
+		updateLights();
 	}
 
 	void updatedTrackedOutputs() {
@@ -338,28 +297,61 @@ struct Moira final : DaisyExpander {
 		}
 	}
 
-	enum Color { WHITE, ORANGE };
+	enum Color { WHITE, ORANGE, BLUE };
 
-	void setLightBrightness(const LightId lightId, const float val, const float delta)
-	{
-		getLight(lightId + 0).setBrightnessSmooth(1.f * val, delta);
-		getLight(lightId + 1).setBrightnessSmooth(1.f * val, delta);
-		getLight(lightId + 2).setBrightnessSmooth(1.f * val, delta);
+	void updateLights() {
+		if (!lightDivider.process())
+			return;
+
+		setLight(X_PROB_LIGHT, p.x, WHITE);
+		setLight(Y_PROB_LIGHT, p.y, WHITE);
+		setLight(Z_PROB_LIGHT, p.z, WHITE);
+
+		updateOutputLight(mainOutputTracker.getCurrentOutput(), ORANGE);
+		updateOutputLight(auxOutputTracker.getCurrentOutput(), BLUE);
 	}
 
-	void setLightColor(const LightId lightId, const Color color, const float delta) {
+	void updateOutputLight(const OutputChangeTracker::Output output, Color color) {
+		switch (output) {
+			case OutputChangeTracker::X:
+				setLight(X_PROB_LIGHT, p.x, color);
+				break;
+			case OutputChangeTracker::Y:
+				setLight(Y_PROB_LIGHT, p.y, color);
+				break;
+			case OutputChangeTracker::Z:
+				setLight(Z_PROB_LIGHT, p.z, color);
+				break;
+			default:
+				break;
+		}
+	}
+
+	void setLight(const LightId lightId, const float brightness, const Color color) {
+		float red, green, blue;
+
 		switch (color) {
 		case ORANGE:
-			getLight(lightId + 0).setBrightnessSmooth(getLight(lightId + 0).getBrightness(), delta);
-			getLight(lightId + 1).setBrightnessSmooth(getLight(lightId + 1).getBrightness(), delta);
-			getLight(lightId + 2).setBrightness(0.f);
+			red = brightness;
+			green = brightness * 0.5f;
+			blue = 0.f;
 			break;
+		case BLUE:
+			red = brightness * 0.15f;
+			green = brightness * 0.5f;
+			blue = brightness;
+			break;
+		case WHITE:
 		default:
-			getLight(lightId + 0).setBrightnessSmooth(getLight(lightId + 0).getBrightness(), delta);
-			getLight(lightId + 1).setBrightnessSmooth(getLight(lightId + 1).getBrightness(), delta);
-			getLight(lightId + 2).setBrightnessSmooth(getLight(lightId + 2).getBrightness(), delta);
-			break;
+				red = brightness;
+				green = brightness;
+				blue = brightness;
+				break;
 		}
+
+		getLight(lightId + 0).setBrightness(red);
+		getLight(lightId + 1).setBrightness(green);
+		getLight(lightId + 2).setBrightness(blue);
 	}
 
 	float getProbabilityAt(const ParamId probParam, const InputId probInput)
