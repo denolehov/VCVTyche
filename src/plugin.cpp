@@ -11,4 +11,5 @@ void init(Plugin* p) {
 	p->addModel(modelKron);
 	p->addModel(modelFate);
 	p->addModel(modelBlank);
+	p->addModel(modelMoira);
 }
