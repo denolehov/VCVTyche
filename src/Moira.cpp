@@ -351,7 +351,7 @@ struct Moira final : DaisyExpander {
 		}
 	}
 
-	enum Color { WHITE, ORANGE, BLUE };
+	enum Color { WHITE, GREEN, BLUE };
 
 	void updateLights() {
 		if (!lightDivider.process())
@@ -361,7 +361,7 @@ struct Moira final : DaisyExpander {
 		setLight(Y_PROB_LIGHT, p.y, WHITE);
 		setLight(Z_PROB_LIGHT, p.z, WHITE);
 
-		updateOutputLight(mainOutputTracker.getCurrentOutput(), ORANGE);
+		updateOutputLight(mainOutputTracker.getCurrentOutput(), GREEN);
 		updateOutputLight(auxOutputTracker.getCurrentOutput(), BLUE);
 	}
 
@@ -385,9 +385,9 @@ struct Moira final : DaisyExpander {
 		float red, green, blue;
 
 		switch (color) {
-		case ORANGE:
-			red = brightness;
-			green = brightness * 0.5f;
+		case GREEN:
+			red = 0.f;
+			green = brightness;
 			blue = 0.f;
 			break;
 		case BLUE:
