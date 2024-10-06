@@ -17,6 +17,7 @@
       "slug": "Omen",
       "name": "Omen",
       "description": "Controls the seed of the other Tyche modules",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#omen",
       "tags": [
         "Random",
         "Sample and hold",
@@ -24,13 +25,16 @@
         "Low-frequency oscillator",
         "Function Generator",
         "Clock Modulator",
-        "Logic"
+        "Logic",
+        "Mixer",
+        "Slew Limiter"
       ]
     },
     {
       "slug": "Kron",
       "name": "Kron",
-      "description": "Random pulse generator",
+      "description": "A probabilistic trigger generator, outputting triggers at clock divisions based on the density parameter",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#kron",
       "tags": [
         "Clock Modulator",
         "Random",
@@ -40,7 +44,8 @@
     {
       "slug": "Tale",
       "name": "Tale",
-      "description": "Random-walk CV source",
+      "description": "A random-walk CV source",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#tale",
       "tags": [
         "Random",
         "Sample and hold",
@@ -52,7 +57,8 @@
     {
       "slug": "Fate",
       "name": "Fate",
-      "description": "A determenistic Bernoulli gate",
+      "description": "A trigger routing module (aka Bernoulli gate)",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#fate",
       "tags": [
         "Random",
         "Logic",
@@ -61,19 +67,27 @@
       ]
     },
     {
-      "slug": "Blank",
-      "name": "Blank",
-      "description": "A blank separator from Tyche collection",
+      "slug": "Moira",
+      "name": "Moira",
+      "description": "A probabilistic voltage selector, which outputs one of the three user-defined voltages based on relative probabilities.",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#moira",
       "tags": [
-        "Blank",
+        "Logic",
+        "Mixer",
+        "Random",
+        "Slew Limiter",
         "Expander"
       ]
     },
     {
-      "slug": "Moira",
-      "name": "Moira",
-      "description": "",
-      "tags": []
+      "slug": "Blank",
+      "name": "Blank",
+      "description": "A blank separator from Tyche collection",
+      "manualUrl": "https://github.com/denolehov/VCVTyche/blob/main/README.md#blank",
+      "tags": [
+        "Blank",
+        "Expander"
+      ]
     }
   ]
 }
