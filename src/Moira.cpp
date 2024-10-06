@@ -31,11 +31,40 @@ struct CrossFadeFilter {
 		return value;
 	}
 
-	static float easeInOut(float t) {
+	static float easeInOut(const float t) {
 		if (t < 0.5)
 			return 4 * t * t * t;
 
 		return (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+	}
+
+	json_t* dataToJson() const {
+		json_t* rootJ = json_object();
+
+		json_t* fadeTimeJ = json_real(fadeTime);
+		json_object_set_new(rootJ, "fadeTime", fadeTimeJ);
+
+		json_t* fadeProgressJ = json_real(fadeProgress);
+		json_object_set_new(rootJ, "fadeProgress", fadeProgressJ);
+
+		json_t* isFadingJ = json_boolean(isFading);
+		json_object_set_new(rootJ, "isFading", isFadingJ);
+
+		return rootJ;
+	}
+
+	void dataFromJson(const json_t* rootJ) {
+		const json_t* fadeTimeJ = json_object_get(rootJ, "fadeTime");
+		if (fadeTimeJ)
+			fadeTime = static_cast<float>(json_real_value(fadeTimeJ));
+
+		const json_t* fadeProgressJ = json_object_get(rootJ, "fadeProgress");
+		if (fadeProgressJ)
+			fadeProgress = static_cast<float>(json_real_value(fadeProgressJ));
+
+		const json_t* isFadingJ = json_object_get(rootJ, "isFading");
+		if (isFadingJ)
+			isFading = json_boolean_value(isFadingJ);
 	}
 };
 
@@ -69,6 +98,31 @@ struct OutputChangeTracker {
 
 	bool hasChanged() const {
 		return hasOutputChanged;
+	}
+
+	json_t* dataToJson() const {
+		json_t* rootJ = json_object();
+
+		json_t* currentOutputJ = json_integer(currentOutput);
+		json_object_set_new(rootJ, "currentOutput", currentOutputJ);
+
+		json_t* previousOutputJ = json_integer(previousOutput);
+		json_object_set_new(rootJ, "previousOutput", previousOutputJ);
+
+		return rootJ;
+	}
+
+	void dataFromJson(const json_t* rootJ) {
+		const json_t* currentOutputJ = json_object_get(rootJ, "currentOutput");
+		if (currentOutputJ)
+			currentOutput = static_cast<Output>(json_integer_value(currentOutputJ));
+
+		const json_t* previousOutputJ = json_object_get(rootJ, "previousOutput");
+		if (previousOutputJ)
+			previousOutput = static_cast<Output>(json_integer_value(previousOutputJ));
+
+		if (currentOutput != previousOutput)
+			hasOutputChanged = true;
 	}
 };
 
@@ -382,6 +436,49 @@ struct Moira final : DaisyExpander {
 	void reset() override
 	{
 		phase = 0;
+	}
+
+	json_t* dataToJson() override {
+		json_t* rootJ = json_object();
+
+		json_t* variantJ = json_real(variant);
+		json_object_set_new(rootJ, "variant", variantJ);
+
+		json_t* phaseJ = json_real(phase);
+		json_object_set_new(rootJ, "phase", phaseJ);
+
+		json_t* mainOutputTrackerJ = mainOutputTracker.dataToJson();
+		json_object_set_new(rootJ, "mainOutputTracker", mainOutputTrackerJ);
+
+		json_t* auxOutputTrackerJ = auxOutputTracker.dataToJson();
+		json_object_set_new(rootJ, "auxOutputTracker", auxOutputTrackerJ);
+
+		json_t* outCrossfadeFilterJ = outCrossfadeFilter.dataToJson();
+		json_object_set_new(rootJ, "outCrossfadeFilter", outCrossfadeFilterJ);
+
+		return rootJ;
+	}
+
+	void dataFromJson(json_t* rootJ) override {
+		const json_t* variantJ = json_object_get(rootJ, "variant");
+		if (variantJ)
+			variant = static_cast<float>(json_real_value(variantJ));
+
+		const json_t* phaseJ = json_object_get(rootJ, "phase");
+		if (phaseJ)
+			phase = json_real_value(phaseJ);
+
+		const json_t* mainOutputTrackerJ = json_object_get(rootJ, "mainOutputTracker");
+		if (mainOutputTrackerJ)
+			mainOutputTracker.dataFromJson(mainOutputTrackerJ);
+
+		const json_t* auxOutputTrackerJ = json_object_get(rootJ, "auxOutputTracker");
+		if (auxOutputTrackerJ)
+			auxOutputTracker.dataFromJson(auxOutputTrackerJ);
+
+		const json_t* outCrossfadeFilterJ = json_object_get(rootJ, "outCrossfadeFilter");
+		if (outCrossfadeFilterJ)
+			outCrossfadeFilter.dataFromJson(outCrossfadeFilterJ);
 	}
 };
 
