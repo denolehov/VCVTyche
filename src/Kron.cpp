@@ -27,8 +27,8 @@ struct Kron final : DaisyExpander {
 	};
 
 	uint32_t clock = 0;
-	uint32_t division = 48;
-	int divisionIdx = 0;
+	uint32_t division = 12;
+	int divisionIdx = 6;
 
 	float variant = 1;
 	dsp::ClockDivider variantChangeDivider;
@@ -57,7 +57,7 @@ struct Kron final : DaisyExpander {
 
 	Kron() {
 		config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
-		configParam(DENSITY_PARAM, 0.f, 100.f, 0.f, "Density", "%");
+		configParam(DENSITY_PARAM, 0.f, 100.f, 50.f, "Density", "%");
 		configParam(VARIANT_PARAM, 1.f, 128.f, 1.f, "Variant");
 		configInput(DENSITY_INPUT, "Density");
 		configInput(MUTE_INPUT, "Mute");
