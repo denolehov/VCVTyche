@@ -135,6 +135,7 @@ This module is heavily inspired by the [Rhythm Explorer](https://github.com/Dave
 
 ### Usage Notes
 
+- **Latch mode**: Use right-click context menu to enable latch mode, where the last trigger is held until the next trigger arrives.
 - **Seed Influence**: The randomness is driven by the seed from **Omen**, making the probabilistic routing consistent and repeatable across patches.
 - **External Modulation**: Use CV modulation to dynamically change the probability during a patch, allowing for more evolving and fluid routing behavior.
 - **Generative Patching**: Combine **Fate** with sequencers, random generators, or rhythmic modules for creative, probabilistic control over trigger paths.

@@ -26,6 +26,9 @@ struct Fate final : DaisyExpander {
 	enum HoldState { A, B, NONE };
 
 	HoldState holdState = NONE;
+	bool canProcessNewGate = true;
+
+	bool latchMode = false;
 
 	double phase = 0;
 	float variant = 1.f;
@@ -63,14 +66,17 @@ struct Fate final : DaisyExpander {
 		inSchmitt.process(getInput(IN_INPUT).getVoltage(), 0.1f, 1.f);
 
 		const bool gate = inSchmitt.isHigh();
-		if (gate && holdState == NONE)
+		if (gate && canProcessNewGate)
 		{
 			const float bias = getBias();
 			const double noiseVal = noise->eval(variant, phase);
 			holdState = noiseVal >= bias ? A : B;
+			canProcessNewGate = false;
 		} else if (!gate)
 		{
-			holdState = NONE;
+			if (!latchMode)
+				holdState = NONE;
+			canProcessNewGate = true;
 		}
 
 		switch (holdState)
@@ -116,6 +122,12 @@ struct Fate final : DaisyExpander {
 		json_t* holdStateJ = json_integer(holdState);
 		json_object_set_new(rootJ, "holdState", holdStateJ);
 
+		json_t* latchJ = json_boolean(latchMode);
+		json_object_set_new(rootJ, "latch", latchJ);
+
+		json_t* canProcessNewGateJ = json_boolean(canProcessNewGate);
+		json_object_set_new(rootJ, "canProcessNewGate", canProcessNewGateJ);
+
 		return rootJ;
 	}
 
@@ -132,6 +144,14 @@ struct Fate final : DaisyExpander {
 		const json_t* holdStateJ = json_object_get(rootJ, "holdState");
 		if (holdStateJ)
 			holdState = static_cast<HoldState>(json_integer_value(holdStateJ));
+
+		const json_t* latchJ = json_object_get(rootJ, "latch");
+		if (latchJ)
+			latchMode = json_boolean_value(latchJ);
+
+		const json_t* canProcessNewGateJ = json_object_get(rootJ, "canProcessNewGate");
+		if (canProcessNewGateJ)
+			canProcessNewGate = json_boolean_value(canProcessNewGateJ);
 	}
 };
 
@@ -157,6 +177,13 @@ struct FateWidget final : ModuleWidget {
 
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 78.0)), module, Fate::OUT_A_OUTPUT));
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.698, 96.5)), module, Fate::OUT_B_OUTPUT));
+	}
+
+	void appendContextMenu(ui::Menu* menu) override {
+		Fate* module = getModule<Fate>();
+
+		menu->addChild(new MenuSeparator());
+		menu->addChild(createBoolPtrMenuItem("Latch mode", "", &module->latchMode));
 	}
 };
 
