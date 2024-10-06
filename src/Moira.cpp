@@ -8,7 +8,7 @@ struct SlewFilter
 
 	float process(const float in, const float slew)
 	{
-		value += math::clamp(in - value, -slew, slew);
+		value += clamp(in - value, -slew, slew);
 		return value;
 	}
 
@@ -101,10 +101,12 @@ struct Moira final : DaisyExpander {
 	dsp::SchmittTrigger triggerInput;
 	dsp::SchmittTrigger resetTrigger;
 
-	float outputVoltage = 0.f;
-	float auxVoltage = 0.f;
-
 	float AUX_OFFSET = 300.f;
+
+	enum Output { X, Y, Z, NONE };
+
+	Output activeOutput = NONE;
+	Output activeAuxOutput = NONE;
 
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
@@ -119,7 +121,7 @@ struct Moira final : DaisyExpander {
 			variant = newVariant;
 
 		setOutputVoltages(args.sampleTime);
-		updateOutVoltageWithSlew(args.sampleTime);
+		updateOutVoltagesWithSlew(args.sampleTime);
 	}
 
 	void setOutputVoltages(const float delta) {
@@ -151,48 +153,48 @@ struct Moira final : DaisyExpander {
 		const float noiseVal = sampleNoise();
 
 		if (xProb >= 0.f && noiseVal < xProb) {
-			outputVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+			activeOutput = X;
 
 			if (yProb + zProb == 0.f) {
-				auxVoltage = outputVoltage;
+				activeAuxOutput = X;
 				return;
 			}
 
 			const float auxYprob = yProb / (yProb + zProb);
 			if (sampleNoise(AUX_OFFSET) < auxYprob) {
-				auxVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+				activeAuxOutput = Y;
 			} else {
-				auxVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+				activeAuxOutput = Z;
 			}
 
 		} else if (yProb >= 0.f && noiseVal <= xProb + yProb) {
-			outputVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+			activeOutput = Y;
 
 			if (xProb + zProb == 0.f) {
-				auxVoltage = outputVoltage;
+				activeAuxOutput = Y;
 				return;
 			}
 
 			const float auxXprob = xProb / (xProb + zProb);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
-				auxVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+				activeAuxOutput = X;
 			} else {
-				auxVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+				activeAuxOutput = Z;
 			}
 
 		} else if (zProb > 0.f) {
-			outputVoltage = getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+			activeOutput = Z;
 
 			if (xProb + yProb == 0.f) {
-				auxVoltage = outputVoltage;
+				activeAuxOutput = Z;
 				return;
 			}
 
-			float auxXprob = xProb / (xProb + yProb);
+			const float auxXprob = xProb / (xProb + yProb);
 			if (sampleNoise(AUX_OFFSET) < auxXprob) {
-				auxVoltage = getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+				activeAuxOutput = X;
 			} else {
-				auxVoltage = getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+				activeAuxOutput = Y;
 			}
 		}
 	}
@@ -202,7 +204,7 @@ struct Moira final : DaisyExpander {
 		return rescale(noise->eval(variant, phase + offset), -1.f, 1.f, 0.f, 1.f);
 	}
 
-	void updateOutVoltageWithSlew(float delta)
+	void updateOutVoltagesWithSlew(const float delta)
 	{
 		float slewAmount = getParam(SLEW_PARAM).getValue();
 		if (slewAmount <= std::log2(1e-3f))
@@ -214,8 +216,26 @@ struct Moira final : DaisyExpander {
 
 		const float slewDelta = slew * delta;
 
-		getOutput(OUT_OUTPUT).setVoltage(outSlewFilter.process(outputVoltage, slewDelta));
+		const float outVoltage = getActiveOutputVoltage(activeOutput);
+		const float auxVoltage = getActiveOutputVoltage(activeAuxOutput);
+
+		getOutput(OUT_OUTPUT).setVoltage(outSlewFilter.process(outVoltage, slewDelta));
 		getOutput(AUX_OUTPUT).setVoltage(auxSlewFilter.process(auxVoltage, slewDelta));
+	}
+
+	float getActiveOutputVoltage(const Output output)
+	{
+		switch (output)
+		{
+		case X:
+			return getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+		case Y:
+			return getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+		case Z:
+			return getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+		default:
+			return 0.f;
+		}
 	}
 
 	void setLight(const LightId lightId, const float val, const float delta)
