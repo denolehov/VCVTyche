@@ -32,6 +32,7 @@ struct Kron final : DaisyExpander {
 	float variant = 1;
 	dsp::ClockDivider variantChangeDivider;
 
+	int seed = 0;
 	uint32_t globalClock = 0;
 
 	bool clockProcessed = true;
@@ -172,6 +173,9 @@ struct Kron final : DaisyExpander {
 		json_t* variantJ = json_real(variant);
 		json_object_set_new(rootJ, "variant", variantJ);
 
+		json_t* seedJ = json_integer(seed);
+		json_object_set_new(rootJ, "seed", seedJ);
+
 		return rootJ;
 	}
 
@@ -184,6 +188,15 @@ struct Kron final : DaisyExpander {
 		const json_t* variantJ = json_object_get(rootJ, "variant");
 		if (variantJ)
 			variant = static_cast<float>(json_integer_value(variantJ));
+
+		const json_t* seedJ = json_object_get(rootJ, "seed");
+		if (seedJ)
+			seed = static_cast<int>(json_integer_value(seedJ));
+	}
+
+	void onSeedChanged(int newSeed) override {
+		seed = newSeed;
+		reseedNoise(newSeed);
 	}
 };
 

@@ -49,6 +49,10 @@ struct Tale final : DaisyExpander {
 		variantChangeDivider.setDivision(16384);
 	}
 
+	bool firstEverProcess = true;
+
+	int seed = 0;
+
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
 
@@ -101,6 +105,11 @@ struct Tale final : DaisyExpander {
 		}
 	}
 
+	void onSeedChanged(int newSeed) override {
+		seed = newSeed;
+		reseedNoise(newSeed);
+	}
+
 	void reset() override
 	{
 		phase = 0;
@@ -119,6 +128,9 @@ struct Tale final : DaisyExpander {
 		json_t* phaseJ = json_real(phase);
 		json_object_set_new(rootJ, "phase", phaseJ);
 
+		json_t* seedJ = json_integer(seed);
+		json_object_set_new(rootJ, "seed", seedJ);
+
 		return rootJ;
 	}
 
@@ -135,6 +147,12 @@ struct Tale final : DaisyExpander {
 		const json_t* phaseJ = json_object_get(rootJ, "phase");
 		if (phaseJ)
 			phase = json_real_value(phaseJ);
+
+		const json_t* seedJ = json_object_get(rootJ, "seed");
+		if (seedJ) {
+			seed = static_cast<int>(json_integer_value(seedJ));
+			reseedNoise(seed);
+		}
 	}
 };
 

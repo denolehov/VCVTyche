@@ -5,6 +5,7 @@
 
 struct Message {
     int seed = 0;
+    bool seedChanged = false;
 
     bool globalReset = false;
 
@@ -18,7 +19,6 @@ struct Message {
 
 struct DaisyExpander : Module
 {
-    int seed = 0;
     std::unique_ptr<OpenSimplexNoise::Noise> noise;
     Message messages[2] = {};
 
@@ -33,6 +33,7 @@ struct DaisyExpander : Module
 
     virtual void reset();
     virtual void onClock(uint32_t clock);
+    virtual void onSeedChanged(int seed);
 };
 
 bool isExpanderCompatible(Module* module);
