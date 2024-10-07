@@ -34,6 +34,7 @@ struct Kron final : DaisyExpander {
 
 	int seed = 0;
 	uint32_t globalClock = 0;
+	double phase = 0;
 
 	bool clockProcessed = true;
 
@@ -77,7 +78,7 @@ struct Kron final : DaisyExpander {
 		const bool clockDivisionTriggered = globalClock % division == 0;
 		const bool isBlocked = getInput(MUTE_INPUT).getVoltage() >= 0.1f;
 
-		const float noiseVal = rescale(noise->eval(variant, globalClock), -1.f, 1.f, 0.f, 100.f);
+		const float noiseVal = rescale(noise->eval(variant + phase, globalClock), -1.f, 1.f, 0.f, 100.f);
 
 		const float density = getDensity();
 		bool noiseGate = false;
@@ -138,6 +139,7 @@ struct Kron final : DaisyExpander {
 
 	void reset() override
 	{
+		phase = 0;
 		globalClock = 0;
 		pulse.reset();
 	}
@@ -176,6 +178,9 @@ struct Kron final : DaisyExpander {
 		json_t* seedJ = json_integer(seed);
 		json_object_set_new(rootJ, "seed", seedJ);
 
+		json_t* phaseJ = json_real(phase);
+		json_object_set_new(rootJ, "phase", phaseJ);
+
 		return rootJ;
 	}
 
@@ -192,6 +197,10 @@ struct Kron final : DaisyExpander {
 		const json_t* seedJ = json_object_get(rootJ, "seed");
 		if (seedJ)
 			seed = static_cast<int>(json_integer_value(seedJ));
+
+		const json_t* phaseJ = json_object_get(rootJ, "phase");
+		if (phaseJ)
+			phase = json_real_value(phaseJ);
 	}
 
 	void onSeedChanged(int newSeed) override {
