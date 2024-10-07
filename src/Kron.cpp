@@ -26,13 +26,13 @@ struct Kron final : DaisyExpander {
 		LIGHTS_LEN
 	};
 
-	uint32_t clock = 0;
 	uint32_t division = 12;
 	int divisionIdx = 6;
 
 	float variant = 1;
 	dsp::ClockDivider variantChangeDivider;
 
+	int seed = 0;
 	uint32_t globalClock = 0;
 
 	bool clockProcessed = true;
@@ -74,10 +74,10 @@ struct Kron final : DaisyExpander {
 		handleVariantChange();
 		division = divisionMapping[divisionIdx];
 
-		const bool clockDivisionTriggered = clock % division == 0;
+		const bool clockDivisionTriggered = globalClock % division == 0;
 		const bool isBlocked = getInput(MUTE_INPUT).getVoltage() >= 0.1f;
 
-		const float noiseVal = rescale(noise->eval(variant, clock), -1.f, 1.f, 0.f, 100.f);
+		const float noiseVal = rescale(noise->eval(variant, globalClock), -1.f, 1.f, 0.f, 100.f);
 
 		const float density = getDensity();
 		bool noiseGate = false;
@@ -133,22 +133,12 @@ struct Kron final : DaisyExpander {
 	void onClock(const uint32_t clock) override
 	{
 		clockProcessed = false;
-
-		if (clock == 0 || globalClock > clock)
-		{
-			this->clock = clock;
-			globalClock = clock;
-			return;
-		}
-
-		const auto clockDelta = static_cast<int32_t>(clock - globalClock);
-		this->clock += clockDelta;
 		globalClock = clock;
 	}
 
 	void reset() override
 	{
-		clock = 0;
+		globalClock = 0;
 		pulse.reset();
 	}
 
@@ -183,6 +173,9 @@ struct Kron final : DaisyExpander {
 		json_t* variantJ = json_real(variant);
 		json_object_set_new(rootJ, "variant", variantJ);
 
+		json_t* seedJ = json_integer(seed);
+		json_object_set_new(rootJ, "seed", seedJ);
+
 		return rootJ;
 	}
 
@@ -195,6 +188,15 @@ struct Kron final : DaisyExpander {
 		const json_t* variantJ = json_object_get(rootJ, "variant");
 		if (variantJ)
 			variant = static_cast<float>(json_integer_value(variantJ));
+
+		const json_t* seedJ = json_object_get(rootJ, "seed");
+		if (seedJ)
+			seed = static_cast<int>(json_integer_value(seedJ));
+	}
+
+	void onSeedChanged(int newSeed) override {
+		seed = newSeed;
+		reseedNoise(newSeed);
 	}
 };
 

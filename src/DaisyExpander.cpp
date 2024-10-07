@@ -29,11 +29,13 @@ void DaisyExpander::processIncomingMessage()
     if (!message || message->processed)
         return;
 
-    if (message->seed != seed || message->globalReset)
-    {
+    if (message->seedChanged) {
         reseedNoise(message->seed);
+        onSeedChanged(message->seed);
+    }
+
+    if (message->globalReset) {
         reset();
-        seed = message->seed;
     }
 
     if (message->clockReceived)
@@ -69,3 +71,4 @@ bool isExpanderCompatible(Module* module)
 void DaisyExpander::reset() {}
 
 void DaisyExpander::onClock(uint32_t clock) {}
+void DaisyExpander::onSeedChanged(int newSeed) {}

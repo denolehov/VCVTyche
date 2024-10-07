@@ -30,6 +30,7 @@ struct Fate final : DaisyExpander {
 
 	bool latchMode = false;
 
+	int seed = 0;
 	double phase = 0;
 	float variant = 1.f;
 
@@ -128,6 +129,9 @@ struct Fate final : DaisyExpander {
 		json_t* canProcessNewGateJ = json_boolean(canProcessNewGate);
 		json_object_set_new(rootJ, "canProcessNewGate", canProcessNewGateJ);
 
+		json_t* seedJ = json_integer(seed);
+		json_object_set_new(rootJ, "seed", seedJ);
+
 		return rootJ;
 	}
 
@@ -152,6 +156,17 @@ struct Fate final : DaisyExpander {
 		const json_t* canProcessNewGateJ = json_object_get(rootJ, "canProcessNewGate");
 		if (canProcessNewGateJ)
 			canProcessNewGate = json_boolean_value(canProcessNewGateJ);
+
+		const json_t* seedJ = json_object_get(rootJ, "seed");
+		if (seedJ) {
+			seed = static_cast<int>(json_integer_value(seedJ));
+			reseedNoise(seed);
+		}
+	}
+
+	void onSeedChanged(int newSeed) override {
+		seed = newSeed;
+		reseedNoise(seed);
 	}
 };
 

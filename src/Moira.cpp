@@ -190,6 +190,7 @@ struct Moira final : DaisyExpander {
 
 	float PHASE_ADVANCE_SPEED = dsp::FREQ_A4;
 
+	int seed = 0;
 	float variant = 1.f;
 	double phase = 0;
 
@@ -456,6 +457,12 @@ struct Moira final : DaisyExpander {
 		json_t* outCrossfadeFilterJ = outCrossfadeFilter.dataToJson();
 		json_object_set_new(rootJ, "outCrossfadeFilter", outCrossfadeFilterJ);
 
+		json_t* auxCrossfadeFilterJ = auxCrossfadeFilter.dataToJson();
+		json_object_set_new(rootJ, "auxCrossfadeFilter", auxCrossfadeFilterJ);
+
+		json_t* seedJ = json_integer(seed);
+		json_object_set_new(rootJ, "seed", seedJ);
+
 		return rootJ;
 	}
 
@@ -479,6 +486,19 @@ struct Moira final : DaisyExpander {
 		const json_t* outCrossfadeFilterJ = json_object_get(rootJ, "outCrossfadeFilter");
 		if (outCrossfadeFilterJ)
 			outCrossfadeFilter.dataFromJson(outCrossfadeFilterJ);
+
+		const json_t* auxCrossfadeFilterJ = json_object_get(rootJ, "auxCrossfadeFilter");
+		if (auxCrossfadeFilterJ)
+			auxCrossfadeFilter.dataFromJson(auxCrossfadeFilterJ);
+
+		const json_t* seedJ = json_object_get(rootJ, "seed");
+		if (seedJ)
+			seed = static_cast<int>(json_integer_value(seedJ));
+	}
+
+	void onSeedChanged(int newSeed) override {
+		seed = newSeed;
+		reseedNoise(newSeed);
 	}
 };
 

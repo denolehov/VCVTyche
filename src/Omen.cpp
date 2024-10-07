@@ -93,7 +93,7 @@ struct Omen final : Module {
 
 		if (seedChanged || clockHigh || resetHigh)
 		{
-			propagateToDaisyChained(clockHigh, resetHigh);
+			propagateToDaisyChained(clockHigh, resetHigh, seedChanged);
 		}
 
 		updateSeedButtonColors(args.sampleTime);
@@ -112,10 +112,10 @@ struct Omen final : Module {
 
 		updateSeed();
 
-		propagateToDaisyChained(false, false);
+		propagateToDaisyChained(false, false, true);
 	}
 
-	void propagateToDaisyChained(const bool clockHigh, const bool resetHigh)
+	void propagateToDaisyChained(const bool clockHigh, const bool resetHigh, const bool seedChanged)
 	{
 		Module* rightModule = getRightExpander().module;
 		if (!isExpanderCompatible(rightModule))
@@ -129,6 +129,7 @@ struct Omen final : Module {
 		// TODO: Message should be a struct with a proper constructor.
 		Message message;
 		message.seed = seed;
+		message.seedChanged = seedChanged;
 		message.clock = clock;
 		message.clockReceived = clockHigh;
 		message.globalReset = resetHigh;
@@ -235,7 +236,7 @@ struct Omen final : Module {
 			}
 		}
 
-		propagateToDaisyChained(false, false);
+		propagateToDaisyChained(false, false, true);
 	}
 };
 
