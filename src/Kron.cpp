@@ -26,7 +26,6 @@ struct Kron final : DaisyExpander {
 		LIGHTS_LEN
 	};
 
-	uint32_t clock = 0;
 	uint32_t division = 12;
 	int divisionIdx = 6;
 
@@ -74,10 +73,10 @@ struct Kron final : DaisyExpander {
 		handleVariantChange();
 		division = divisionMapping[divisionIdx];
 
-		const bool clockDivisionTriggered = clock % division == 0;
+		const bool clockDivisionTriggered = globalClock % division == 0;
 		const bool isBlocked = getInput(MUTE_INPUT).getVoltage() >= 0.1f;
 
-		const float noiseVal = rescale(noise->eval(variant, clock), -1.f, 1.f, 0.f, 100.f);
+		const float noiseVal = rescale(noise->eval(variant, globalClock), -1.f, 1.f, 0.f, 100.f);
 
 		const float density = getDensity();
 		bool noiseGate = false;
@@ -133,22 +132,12 @@ struct Kron final : DaisyExpander {
 	void onClock(const uint32_t clock) override
 	{
 		clockProcessed = false;
-
-		if (clock == 0 || globalClock > clock)
-		{
-			this->clock = clock;
-			globalClock = clock;
-			return;
-		}
-
-		const auto clockDelta = static_cast<int32_t>(clock - globalClock);
-		this->clock += clockDelta;
 		globalClock = clock;
 	}
 
 	void reset() override
 	{
-		clock = 0;
+		globalClock = 0;
 		pulse.reset();
 	}
 
