@@ -34,7 +34,7 @@ struct Kron final : DaisyExpander {
 
 	int seed = 0;
 	uint32_t globalClock = 0;
-	double phase = 0;
+	uint32_t localClock = 0;
 
 	bool clockProcessed = true;
 
@@ -66,24 +66,29 @@ struct Kron final : DaisyExpander {
 		configOutput(OUT_OUTPUT, "Trigger");
 
 		variantChangeDivider.setDivision(16384);
+		debugPrint.setDivision(1024);
 	}
 
+	dsp::ClockDivider debugPrint;
 
 	void process(const ProcessArgs& args) override {
-		handleReset();
 		DaisyExpander::process(args);
+		handleReset();
 		handleVariantChange();
 		division = divisionMapping[divisionIdx];
 
 		const bool clockDivisionTriggered = globalClock % division == 0;
 		const bool isBlocked = getInput(MUTE_INPUT).getVoltage() >= 0.1f;
 
-		const float noiseVal = rescale(noise->eval(variant + phase, globalClock), -1.f, 1.f, 0.f, 100.f);
+		const float noiseVal = rescale(noise->eval(variant, localClock), -1.f, 1.f, 0.f, 100.f);
 
 		const float density = getDensity();
 		bool noiseGate = false;
 		if (density >= noiseVal)
 			noiseGate = true;
+
+		if (debugPrint.process())
+			DEBUG("THIS: %p, GLOBAL CLOCK: %d, LOCAL CLOCK: %d, DIVISION: %d, DIVISION TRIGGERED: %d, NOISE GATE: %d, BLOCKED: %d, NOISE VAL: %f, DENSITY: %f", this, globalClock, localClock, division, clockDivisionTriggered, noiseGate, isBlocked, noiseVal, density);
 
 		if (!clockProcessed && clockDivisionTriggered && noiseGate && !isBlocked)
 		{
@@ -134,14 +139,28 @@ struct Kron final : DaisyExpander {
 	void onClock(const uint32_t clock) override
 	{
 		clockProcessed = false;
-		globalClock = clock;
+
+		globalClock++;
+		localClock++;
+
+		const uint32_t delta = clock - globalClock;
+		if (delta > 0) {
+			// The module has been disconnected for a while.
+			// We need to catch up the local clock to the global clock.
+			globalClock = clock;
+			localClock += delta;
+		}
+
+		// Local clock cannot be greater than the global clock.
+		if (localClock > globalClock)
+			localClock = globalClock;
 	}
 
-	void reset() override
-	{
-		phase = 0;
-		globalClock = 0;
+	void reset() override {
+		localClock = 0;
 		pulse.reset();
+
+		DEBUG("RESET TRIGGERED! THIS: %p, GLOBAL CLOCK: %d, LOCAL CLOCK: %d", this, globalClock, localClock);
 	}
 
 	void setLight(const LightId lightIndex, const LightColor color, const float delta)
@@ -178,8 +197,8 @@ struct Kron final : DaisyExpander {
 		json_t* seedJ = json_integer(seed);
 		json_object_set_new(rootJ, "seed", seedJ);
 
-		json_t* phaseJ = json_real(phase);
-		json_object_set_new(rootJ, "phase", phaseJ);
+		json_t* localClockJ = json_integer(localClock);
+		json_object_set_new(rootJ, "localClock", localClockJ);
 
 		return rootJ;
 	}
@@ -198,9 +217,9 @@ struct Kron final : DaisyExpander {
 		if (seedJ)
 			seed = static_cast<int>(json_integer_value(seedJ));
 
-		const json_t* phaseJ = json_object_get(rootJ, "phase");
-		if (phaseJ)
-			phase = json_real_value(phaseJ);
+		const json_t* localClockJ = json_object_get(rootJ, "localClock");
+		if (localClockJ)
+			localClock = static_cast<uint32_t>(json_integer_value(localClockJ));
 	}
 
 	void onSeedChanged(int newSeed) override {
