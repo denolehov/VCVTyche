@@ -91,10 +91,7 @@ struct Omen final : Module {
 		if (resetHigh)
 			reset();
 
-		if (seedChanged || clockHigh || resetHigh)
-		{
-			propagateToDaisyChained(clockHigh, resetHigh, seedChanged);
-		}
+		propagateToDaisyChained(clockHigh, resetHigh, seedChanged);
 
 		updateSeedButtonColors(args.sampleTime);
 	}

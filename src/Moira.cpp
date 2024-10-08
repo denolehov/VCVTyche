@@ -496,9 +496,11 @@ struct Moira final : DaisyExpander {
 			seed = static_cast<int>(json_integer_value(seedJ));
 	}
 
-	void onSeedChanged(int newSeed) override {
-		seed = newSeed;
-		reseedNoise(newSeed);
+	void processSeed(int newSeed) override {
+		if (seed != newSeed) {
+			seed = newSeed;
+			reseedNoise(seed);
+		}
 	}
 };
 

@@ -66,10 +66,7 @@ struct Kron final : DaisyExpander {
 		configOutput(OUT_OUTPUT, "Trigger");
 
 		variantChangeDivider.setDivision(16384);
-		debugPrint.setDivision(1024);
 	}
-
-	dsp::ClockDivider debugPrint;
 
 	void process(const ProcessArgs& args) override {
 		DaisyExpander::process(args);
@@ -86,9 +83,6 @@ struct Kron final : DaisyExpander {
 		bool noiseGate = false;
 		if (density >= noiseVal)
 			noiseGate = true;
-
-		if (debugPrint.process())
-			DEBUG("THIS: %p, GLOBAL CLOCK: %d, LOCAL CLOCK: %d, DIVISION: %d, DIVISION TRIGGERED: %d, NOISE GATE: %d, BLOCKED: %d, NOISE VAL: %f, DENSITY: %f", this, globalClock, localClock, division, clockDivisionTriggered, noiseGate, isBlocked, noiseVal, density);
 
 		if (!clockProcessed && clockDivisionTriggered && noiseGate && !isBlocked)
 		{
@@ -159,8 +153,6 @@ struct Kron final : DaisyExpander {
 	void reset() override {
 		localClock = 0;
 		pulse.reset();
-
-		DEBUG("RESET TRIGGERED! THIS: %p, GLOBAL CLOCK: %d, LOCAL CLOCK: %d", this, globalClock, localClock);
 	}
 
 	void setLight(const LightId lightIndex, const LightColor color, const float delta)
@@ -222,9 +214,11 @@ struct Kron final : DaisyExpander {
 			localClock = static_cast<uint32_t>(json_integer_value(localClockJ));
 	}
 
-	void onSeedChanged(int newSeed) override {
-		seed = newSeed;
-		reseedNoise(newSeed);
+	void processSeed(int newSeed) override {
+		if (seed != newSeed) {
+			seed = newSeed;
+			reseedNoise(seed);
+		}
 	}
 };
 
