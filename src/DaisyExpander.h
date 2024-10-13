@@ -33,7 +33,7 @@ struct DaisyExpander : Module
 
     virtual void reset();
     virtual void onClock(uint32_t clock);
-    virtual void onSeedChanged(int seed);
+    virtual void processSeed(int newSeed);
 };
 
 bool isExpanderCompatible(Module* module);

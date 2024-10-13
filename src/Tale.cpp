@@ -105,9 +105,11 @@ struct Tale final : DaisyExpander {
 		}
 	}
 
-	void onSeedChanged(int newSeed) override {
-		seed = newSeed;
-		reseedNoise(newSeed);
+	void processSeed(int newSeed) override {
+		if (seed != newSeed) {
+			seed = newSeed;
+			reseedNoise(seed);
+		}
 	}
 
 	void reset() override
