@@ -69,12 +69,12 @@ struct Kron final : DaisyExpander {
 	}
 
 	void process(const ProcessArgs& args) override {
-		DaisyExpander::process(args);
 		handleReset();
+		DaisyExpander::process(args);
 		handleVariantChange();
 		division = divisionMapping[divisionIdx];
 
-		const bool clockDivisionTriggered = globalClock % division == 0;
+		const bool clockDivisionTriggered = localClock % division == 0;
 		const bool isBlocked = getInput(MUTE_INPUT).getVoltage() >= 0.1f;
 
 		const float noiseVal = rescale(noise->eval(variant, localClock), -1.f, 1.f, 0.f, 100.f);
@@ -126,7 +126,7 @@ struct Kron final : DaisyExpander {
 	void handleVariantChange()
 	{
 		const float newVariant = getParam(VARIANT_PARAM).getValue();
-		if (newVariant != variant && variantChangeDivider.process())
+		if ((newVariant != variant && variantChangeDivider.process()) || variant == 0.f)
 			variant = newVariant;
 	}
 
@@ -134,15 +134,13 @@ struct Kron final : DaisyExpander {
 	{
 		clockProcessed = false;
 
-		globalClock++;
-		localClock++;
-
 		const uint32_t delta = clock - globalClock;
 		if (delta > 0) {
-			// The module has been disconnected for a while.
-			// We need to catch up the local clock to the global clock.
 			globalClock = clock;
 			localClock += delta;
+		} else {
+			globalClock = clock;
+			localClock = clock;
 		}
 
 		// Local clock cannot be greater than the global clock.
@@ -150,8 +148,9 @@ struct Kron final : DaisyExpander {
 			localClock = globalClock;
 	}
 
+
 	void reset() override {
-		localClock = 0;
+		localClock = -1;
 		pulse.reset();
 	}
 
