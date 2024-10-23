@@ -175,6 +175,7 @@ with its randomness influenced by the seed from the **Omen** module.
 
 - **Main Output**: Outputs the selected voltage (**X**, **Y**, or **Z**).
 - **AUX Output**: Outputs a secondary voltage based on the remaining probabilities of the other two voltages not selected by the main output.
+- **X/Y/Z Chosen Output**: Outputs a trigger when a corresponding **X**, **Y**, or **Z** voltage is selected.
 
 ### Usage Notes
 
