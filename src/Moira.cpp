@@ -151,6 +151,9 @@ struct Moira final : DaisyExpander {
 		INPUTS_LEN
 	};
 	enum OutputId {
+		X_CHOSEN_OUTPUT,
+		Y_CHOSEN_OUTPUT,
+		Z_CHOSEN_OUTPUT,
 		AUX_OUTPUT,
 		OUT_OUTPUT,
 		OUTPUTS_LEN
@@ -184,6 +187,10 @@ struct Moira final : DaisyExpander {
 		configOutput(AUX_OUTPUT, "AUX");
 		configOutput(OUT_OUTPUT, "Main");
 
+		configOutput(X_CHOSEN_OUTPUT, "X chosen trigger");
+		configOutput(Y_CHOSEN_OUTPUT, "Y chosen trigger");
+		configOutput(Z_CHOSEN_OUTPUT, "Z chosen trigger");
+
 		variantChangeDivider.setDivision(16384);
 		lightDivider.setDivision(512);
 	}
@@ -207,6 +214,8 @@ struct Moira final : DaisyExpander {
 
 	OutputChangeTracker mainOutputTracker;
 	OutputChangeTracker auxOutputTracker;
+
+	dsp::PulseGenerator xPulse, yPulse, zPulse;
 
 	struct Probabilities {
 		float x = 0.f;
@@ -251,14 +260,46 @@ struct Moira final : DaisyExpander {
 		if (variant != newVariant && variantChangeDivider.process())
 			variant = newVariant;
 
+		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
+
 		calculateProbabilities();
-		updatedTrackedOutputs();
+		updatedTrackedOutputs(triggered);
 		updateOutVoltagesWithFade(args.sampleTime);
+		updateChosenOutput(triggered, args.sampleTime);
 		updateLights();
 	}
 
-	void updatedTrackedOutputs() {
-		const bool triggered = triggerInput.process(inputs[TRIGGER_INPUT].getVoltage(), 0.1f, 1.f);
+	void updateChosenOutput(const bool triggered, const float delta) {
+		const OutputChangeTracker::Output chosenOutput = mainOutputTracker.getCurrentOutput();
+		if (!mainOutputTracker.hasChanged() && !triggered) {
+			updatedChosenOutputTriggers(delta);
+			return;
+		}
+
+		switch (chosenOutput) {
+		case OutputChangeTracker::X:
+			xPulse.trigger(1e-3);
+			break;
+		case OutputChangeTracker::Y:
+			yPulse.trigger(1e-3);
+			break;
+		case OutputChangeTracker::Z:
+			zPulse.trigger(1e-3);
+			break;
+		default:
+			xPulse.reset(); yPulse.reset(); zPulse.reset();
+		}
+
+		updatedChosenOutputTriggers(delta);
+	}
+
+	void updatedChosenOutputTriggers(const float delta) {
+		getOutput(X_CHOSEN_OUTPUT).setVoltage(xPulse.process(delta) ? 10.f : 0.f);
+		getOutput(Y_CHOSEN_OUTPUT).setVoltage(yPulse.process(delta) ? 10.f : 0.f);
+		getOutput(Z_CHOSEN_OUTPUT).setVoltage(zPulse.process(delta) ? 10.f : 0.f);
+	}
+
+	void updatedTrackedOutputs(const bool triggered) {
 		if (!triggered) {
 			mainOutputTracker.process(mainOutputTracker.getCurrentOutput());
 			auxOutputTracker.process(auxOutputTracker.getCurrentOutput());
@@ -518,21 +559,24 @@ struct MoiraWidget final : ModuleWidget {
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(7.647, 24.0)), module, Moira::X_PROB_PARAM, Moira::X_PROB_LIGHT));
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(22.86, 24.0)), module, Moira::Y_PROB_PARAM, Moira::Y_PROB_LIGHT));
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(38.073, 24.0)), module, Moira::Z_PROB_PARAM, Moira::Z_PROB_LIGHT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.647, 60.0)), module, Moira::X_VALUE_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.86, 60.0)), module, Moira::Y_VALUE_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(38.073, 60.0)), module, Moira::Z_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.647, 53.75)), module, Moira::X_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.86, 53.75)), module, Moira::Y_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(38.073, 53.75)), module, Moira::Z_VALUE_PARAM));
 		addParam(createParamCentered<RoundSmallBlackSnapKnob>(mm2px(Vec(7.647, 96.5)), module, Moira::VARIANT_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.695, 96.5)), module, Moira::FADE_PARAM));
 
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 43.5)), module, Moira::X_PROB_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 43.5)), module, Moira::Y_PROB_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 43.5)), module, Moira::Z_PROB_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 70.264)), module, Moira::X_VALUE_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 70.271)), module, Moira::Y_VALUE_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 70.271)), module, Moira::Z_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 64.014)), module, Moira::X_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 64.021)), module, Moira::Y_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 64.021)), module, Moira::Z_VALUE_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.233)), module, Moira::TRIGGER_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.695, 114.233)), module, Moira::RESET_INPUT));
 
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 74.791)), module, Moira::X_CHOSEN_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 74.791)), module, Moira::Y_CHOSEN_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 74.791)), module, Moira::Z_CHOSEN_OUTPUT));
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(37.62, 96.5)), module, Moira::AUX_OUTPUT));
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(37.62, 114.233)), module, Moira::OUT_OUTPUT));
 	}
