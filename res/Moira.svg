@@ -24,13 +24,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="2.8284271"
-     inkscape:cx="26.516504"
-     inkscape:cy="337.82026"
-     inkscape:window-width="2560"
-     inkscape:window-height="1328"
+     inkscape:zoom="1.2644595"
+     inkscape:cx="41.12429"
+     inkscape:cy="235.67382"
+     inkscape:window-width="1512"
+     inkscape:window-height="857"
      inkscape:window-x="0"
-     inkscape:window-y="25"
+     inkscape:window-y="38"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer2" />
   <defs
@@ -492,23 +492,23 @@
        inkscape:label="LOGO_TEXT"
        aria-label="MOIRa" />
     <rect
-       style="fill:#fffff0;fill-opacity:0.33;stroke-width:0.844472"
+       style="fill:#fffff0;fill-opacity:0.1722973;stroke-width:0.796052"
        id="rect79"
        width="0.58499998"
-       height="74.273102"
-       x="15.133914"
-       y="10.5"
-       ry="0.31741828" />
+       height="66"
+       x="15.10342"
+       y="13.003662"
+       ry="0.28206185" />
     <rect
-       style="fill:#fffff0;fill-opacity:0.33;stroke-width:0.844262"
+       style="fill:#fffff0;fill-opacity:0.1722973;stroke-width:0.795854"
        id="rect80"
        width="0.58499998"
-       height="74.236214"
-       x="30.370199"
-       y="10.5"
-       ry="0.31726062" />
+       height="65.967216"
+       x="30.339706"
+       y="13.003662"
+       ry="0.28192174" />
     <rect
-       style="fill:#fffff0;fill-opacity:0.33;stroke-width:0.579562"
+       style="fill:#fffff0;fill-opacity:0.1722973;stroke-width:0.579562"
        id="rect33"
        width="34.983185"
        height="0.58499998"
