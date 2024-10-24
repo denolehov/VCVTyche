@@ -24,15 +24,15 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.78026719"
-     inkscape:cx="46.138042"
-     inkscape:cy="274.26502"
+     inkscape:zoom="2.69695"
+     inkscape:cx="59.697064"
+     inkscape:cy="330.37319"
      inkscape:window-width="1512"
      inkscape:window-height="857"
      inkscape:window-x="0"
      inkscape:window-y="38"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:current-layer="layer2" />
   <defs
      id="defs1">
     <linearGradient
@@ -553,11 +553,11 @@
        inkscape:label="AUX_BG"
        d="m 35.164482,73.000303 c -1.158963,0 -2.091862,0.932895 -2.091862,2.091862 v 2.907833 2.907833 c 0,1.158966 0.932899,2.091862 2.091862,2.091862 h 5.816182 c 1.158964,0 2.091862,-0.932896 2.091862,-2.091862 v -2.907833 -2.907833 c 0,-1.158967 -0.932898,-2.091862 -2.091862,-2.091862 z m 2.908349,0.775146 a 4.2249999,4.2249999 0 0 1 4.225065,4.224549 4.2249999,4.2249999 0 0 1 -4.225065,4.224548 4.2249999,4.2249999 0 0 1 -4.225065,-4.224548 4.2249999,4.2249999 0 0 1 4.225065,-4.224549 z" />
     <rect
-       style="fill:#fffff0;fill-opacity:0.172297;stroke-width:0.312393"
+       style="fill:#fffff0;fill-opacity:0.172297;stroke-width:0.340535"
        id="rect17"
-       width="30.548618"
+       width="36.300682"
        height="0.58499998"
-       x="7.6474328"
+       x="4.7096596"
        y="88.9646"
        ry="0.29249999" />
   </g>
