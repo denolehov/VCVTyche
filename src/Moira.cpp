@@ -201,8 +201,8 @@ struct Moira final : DaisyExpander {
 	float variant = 1.f;
 	double phase = 0;
 
-	CrossFadeFilter outCrossfadeFilter;
-	CrossFadeFilter auxCrossfadeFilter;
+	CrossFadeFilter outCrossfadeFilters[PORT_MAX_CHANNELS];
+	CrossFadeFilter auxCrossfadeFilters[PORT_MAX_CHANNELS];
 
 	dsp::ClockDivider variantChangeDivider;
 	dsp::ClockDivider lightDivider;
@@ -264,7 +264,36 @@ struct Moira final : DaisyExpander {
 
 		calculateProbabilities();
 		updatedTrackedOutputs(triggered);
-		updateOutVoltagesWithFade(args.sampleTime);
+
+		int numChannels = 1;
+		if (inputs[X_VALUE_INPUT].isConnected())
+			numChannels = std::max(numChannels, inputs[X_VALUE_INPUT].getChannels());
+		if (inputs[Y_VALUE_INPUT].isConnected())
+			numChannels = std::max(numChannels, inputs[Y_VALUE_INPUT].getChannels());
+		if (inputs[Z_VALUE_INPUT].isConnected())
+			numChannels = std::max(numChannels, inputs[Z_VALUE_INPUT].getChannels());
+
+		outputs[OUT_OUTPUT].setChannels(numChannels);
+		outputs[AUX_OUTPUT].setChannels(numChannels);
+
+		const float fadeDuration = getParam(FADE_PARAM).getValue();
+
+		if (mainOutputTracker.hasChanged()) {
+			for (int c = 0; c < numChannels; c++) {
+				outCrossfadeFilters[c].start(fadeDuration);
+			}
+		}
+
+		if (auxOutputTracker.hasChanged()) {
+			for (int c = 0; c < numChannels; c++) {
+				auxCrossfadeFilters[c].start(fadeDuration);
+			}
+		}
+
+		for (int c = 0; c < numChannels; c++) {
+			updateOutVoltagesWithFade(c, args.sampleTime);
+		}
+
 		updateChosenOutput(triggered, args.sampleTime);
 		updateLights();
 	}
@@ -360,34 +389,26 @@ struct Moira final : DaisyExpander {
 		return rescale(noise->eval(variant, phase + offset), -1.f, 1.f, 0.f, 1.f);
 	}
 
-	void updateOutVoltagesWithFade(const float delta)
+	void updateOutVoltagesWithFade(const int channel, const float delta)
 	{
-		const float fadeDuration = getParam(FADE_PARAM).getValue();
+		const float prevOutVoltage = getActiveOutputVoltage(mainOutputTracker.getPreviousOutput(), channel);
+		const float currOutVoltage = getActiveOutputVoltage(mainOutputTracker.getCurrentOutput(), channel);
+		outputs[OUT_OUTPUT].setVoltage(outCrossfadeFilters[channel].process(prevOutVoltage, currOutVoltage, delta), channel);
 
-		if (mainOutputTracker.hasChanged())
-			outCrossfadeFilter.start(fadeDuration);
-
-		if (auxOutputTracker.hasChanged())
-			auxCrossfadeFilter.start(fadeDuration);
-
-		const float prevOutVoltage = getActiveOutputVoltage(mainOutputTracker.getPreviousOutput());
-		const float currOutVoltage = getActiveOutputVoltage(mainOutputTracker.getCurrentOutput());
-		getOutput(OUT_OUTPUT).setVoltage(outCrossfadeFilter.process(prevOutVoltage, currOutVoltage, delta));
-
-		const float prevAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getPreviousOutput());
-		const float currAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getCurrentOutput());
-		getOutput(AUX_OUTPUT).setVoltage(auxCrossfadeFilter.process(prevAuxVoltage, currAuxVoltage, delta));
+		const float prevAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getPreviousOutput(), channel);
+		const float currAuxVoltage = getActiveOutputVoltage(auxOutputTracker.getCurrentOutput(), channel);
+		outputs[AUX_OUTPUT].setVoltage(auxCrossfadeFilters[channel].process(prevAuxVoltage, currAuxVoltage, delta), channel);
 	}
 
-	float getActiveOutputVoltage(const OutputChangeTracker::Output output)
+	float getActiveOutputVoltage(const OutputChangeTracker::Output output, const int channel)
 	{
 		switch (output) {
 		case OutputChangeTracker::X:
-			return getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT);
+			return getVoltageAt(X_VALUE_PARAM, X_VALUE_INPUT, channel);
 		case OutputChangeTracker::Y:
-			return getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT);
+			return getVoltageAt(Y_VALUE_PARAM, Y_VALUE_INPUT, channel);
 		case OutputChangeTracker::Z:
-			return getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT);
+			return getVoltageAt(Z_VALUE_PARAM, Z_VALUE_INPUT, channel);
 		default:
 			return 0.f;
 		}
@@ -462,13 +483,13 @@ struct Moira final : DaisyExpander {
 		return value;
 	}
 
-	float getVoltageAt(const ParamId param, const InputId input)
+	float getVoltageAt(const ParamId param, const InputId input, const int channel)
 	{
 		float value = getParam(param).getValue();
 
 		if (getInput(input).isConnected())
 		{
-			value = getInput(input).getVoltage();
+			value = getInput(input).getVoltage(channel);
 			value *= rescale(getParam(param).getValue(), -10.f, 10.f, 0.f, 1.f);
 		}
 
@@ -495,12 +516,6 @@ struct Moira final : DaisyExpander {
 		json_t* auxOutputTrackerJ = auxOutputTracker.dataToJson();
 		json_object_set_new(rootJ, "auxOutputTracker", auxOutputTrackerJ);
 
-		json_t* outCrossfadeFilterJ = outCrossfadeFilter.dataToJson();
-		json_object_set_new(rootJ, "outCrossfadeFilter", outCrossfadeFilterJ);
-
-		json_t* auxCrossfadeFilterJ = auxCrossfadeFilter.dataToJson();
-		json_object_set_new(rootJ, "auxCrossfadeFilter", auxCrossfadeFilterJ);
-
 		json_t* seedJ = json_integer(seed);
 		json_object_set_new(rootJ, "seed", seedJ);
 
@@ -523,14 +538,6 @@ struct Moira final : DaisyExpander {
 		const json_t* auxOutputTrackerJ = json_object_get(rootJ, "auxOutputTracker");
 		if (auxOutputTrackerJ)
 			auxOutputTracker.dataFromJson(auxOutputTrackerJ);
-
-		const json_t* outCrossfadeFilterJ = json_object_get(rootJ, "outCrossfadeFilter");
-		if (outCrossfadeFilterJ)
-			outCrossfadeFilter.dataFromJson(outCrossfadeFilterJ);
-
-		const json_t* auxCrossfadeFilterJ = json_object_get(rootJ, "auxCrossfadeFilter");
-		if (auxCrossfadeFilterJ)
-			auxCrossfadeFilter.dataFromJson(auxCrossfadeFilterJ);
 
 		const json_t* seedJ = json_object_get(rootJ, "seed");
 		if (seedJ)
