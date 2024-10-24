@@ -566,24 +566,24 @@ struct MoiraWidget final : ModuleWidget {
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(7.647, 24.0)), module, Moira::X_PROB_PARAM, Moira::X_PROB_LIGHT));
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(22.86, 24.0)), module, Moira::Y_PROB_PARAM, Moira::Y_PROB_LIGHT));
 		addParam(createLightParamCentered<VCVLightSlider<RedGreenBlueLight>>(mm2px(Vec(38.073, 24.0)), module, Moira::Z_PROB_PARAM, Moira::Z_PROB_LIGHT));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.647, 53.75)), module, Moira::X_VALUE_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.86, 53.75)), module, Moira::Y_VALUE_PARAM));
-		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(38.073, 53.75)), module, Moira::Z_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(7.647, 54.808)), module, Moira::X_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.86, 54.808)), module, Moira::Y_VALUE_PARAM));
+		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(38.073, 54.808)), module, Moira::Z_VALUE_PARAM));
 		addParam(createParamCentered<RoundSmallBlackSnapKnob>(mm2px(Vec(7.647, 96.5)), module, Moira::VARIANT_PARAM));
 		addParam(createParamCentered<RoundSmallBlackKnob>(mm2px(Vec(22.695, 96.5)), module, Moira::FADE_PARAM));
 
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 43.5)), module, Moira::X_PROB_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 43.5)), module, Moira::Y_PROB_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 43.5)), module, Moira::Z_PROB_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 64.014)), module, Moira::X_VALUE_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 64.021)), module, Moira::Y_VALUE_INPUT));
-		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 64.021)), module, Moira::Z_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 66.137)), module, Moira::X_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 66.137)), module, Moira::Y_VALUE_INPUT));
+		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 66.137)), module, Moira::Z_VALUE_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(7.62, 114.233)), module, Moira::TRIGGER_INPUT));
 		addInput(createInputCentered<DarkPJ301MPort>(mm2px(Vec(22.695, 114.233)), module, Moira::RESET_INPUT));
 
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 74.791)), module, Moira::X_CHOSEN_OUTPUT));
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 74.791)), module, Moira::Y_CHOSEN_OUTPUT));
-		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 74.791)), module, Moira::Z_CHOSEN_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(7.647, 78.0)), module, Moira::X_CHOSEN_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(22.86, 78.0)), module, Moira::Y_CHOSEN_OUTPUT));
+		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(38.073, 78.0)), module, Moira::Z_CHOSEN_OUTPUT));
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(37.62, 96.5)), module, Moira::AUX_OUTPUT));
 		addOutput(createOutputCentered<DarkPJ301MPort>(mm2px(Vec(37.62, 114.233)), module, Moira::OUT_OUTPUT));
 	}
